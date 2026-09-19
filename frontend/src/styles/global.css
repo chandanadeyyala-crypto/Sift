@@ -385,3 +385,95 @@ a:hover { text-decoration: underline; }
   }
   .card { padding: var(--space-6); }
 }
+
+/* ── Leaf Flow Animation ──────────────────────────────────── */
+@keyframes leafFlow {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  20% {
+    transform: translate(2px, -3px) rotate(6deg);
+  }
+  45% {
+    transform: translate(-2px, 2px) rotate(-4deg) scale(1.04);
+  }
+  70% {
+    transform: translate(3px, -2px) rotate(4deg);
+  }
+  85% {
+    transform: translate(-1px, 1px) rotate(-2deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+.flowing-leaf-container:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(68, 93, 72, 0.16) !important;
+}
+
+/* ── Print Media: Save Only The Given Contract Info ───────── */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .nav,
+  .step-bar,
+  .flowing-leaf-container,
+  .no-print,
+  #report-ask-section,
+  #report-actions-card,
+  #report-lang-selector,
+  button,
+  a.btn {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #report-printable,
+  #report-printable * {
+    visibility: visible;
+  }
+
+  #report-printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0 !important;
+    padding: 15mm !important;
+    box-sizing: border-box;
+  }
+
+  .card {
+    border: 1px solid #d5d1c2 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 12pt;
+    padding: 12pt !important;
+  }
+
+  h2, h3, h4 {
+    color: #1c1c1c !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .page-shell, main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
+

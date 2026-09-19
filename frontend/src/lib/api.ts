@@ -83,3 +83,36 @@ export function submitAnswers(payload: QuestionPayload): Promise<ReportResponse>
 export function getReport(sessionId: string): Promise<ReportResponse> {
   return request<ReportResponse>(`/contracts/report/${sessionId}`)
 }
+
+export interface AskQuestionPayload {
+  sessionId: string
+  question: string
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>
+}
+
+export interface AskQuestionResponse {
+  answer: string
+  question: string
+}
+
+export function askQuestion(payload: AskQuestionPayload): Promise<AskQuestionResponse> {
+  return request<AskQuestionResponse>('/contracts/ask', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export interface TranslatePayload {
+  sessionId: string
+  targetLanguage: 'Hindi' | 'Telugu'
+}
+
+export function translateReport(payload: TranslatePayload): Promise<ReportResponse & { targetLanguage: string }> {
+  return request<ReportResponse & { targetLanguage: string }>('/contracts/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+

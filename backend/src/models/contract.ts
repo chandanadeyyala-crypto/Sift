@@ -38,6 +38,8 @@ export interface ContractSession {
   contractType: string
   userAnswers?: Record<string, string>
   analysis?: ContractAnalysis
+  translations?: Record<string, ContractAnalysis>
+  chatHistory?: Array<{ role: 'user' | 'assistant'; content: string; ts: string }>
   createdAt: FirebaseFirestore.Timestamp
   updatedAt: FirebaseFirestore.Timestamp
 }

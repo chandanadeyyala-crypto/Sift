@@ -147,3 +147,68 @@ export async function analyzeContract(
 
   return cleanAndParseJson<ContractAnalysis>(raw)
 }
+
+/**
+ * Ask a specific follow-up question about the contract.
+ */
+export async function askContractQuestion(
+  contractText: string,
+  question: string,
+  history: Array<{ role: 'user' | 'assistant'; content: string }> = []
+): Promise<string> {
+  const historyFormatted = history
+    .slice(-6)
+    .map((h) => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`)
+    .join('\n')
+
+  const prompt = `You are Sift's AI Contract Assistant helping a freelancer understand their contract terms.
+Answer the user's question directly, accurately, and objectively based on the contract text below.
+Write in clear, accessible plain English for a non-lawyer freelancer.
+If the contract does not mention or specify something, explicitly say that the contract is silent on that issue and what that usually means for the freelancer.
+Keep your response concise (typically 2 to 4 clear sentences or bullet points).
+
+<contract>
+${contractText.slice(0, 30000)}
+</contract>
+
+${historyFormatted ? `## Conversation history:\n${historyFormatted}\n` : ''}
+
+User's question:
+${question}
+`
+
+  return geminiChat(prompt, false)
+}
+
+/**
+ * Translate contract analysis into authentic Hindi or Telugu.
+ */
+export async function translateAnalysis(
+  analysis: ContractAnalysis,
+  targetLanguage: 'Hindi' | 'Telugu'
+): Promise<ContractAnalysis> {
+  const languageScript =
+    targetLanguage === 'Telugu'
+      ? 'Telugu (in authentic Telugu script)'
+      : 'Hindi (in authentic Devanagari Hindi script)'
+
+  const prompt = `You are a high-caliber professional legal translator specializing in contracts for freelancers in India.
+Translate the following contract analysis JSON into natural, authentic, professional ${languageScript}.
+
+CRITICAL INSTRUCTIONS:
+1. Maintain the EXACT JSON structure, keys, and hierarchy.
+2. In the "risks" array:
+   - "clause": Translate the clause name accurately.
+   - "severity": Keep the value STRICTLY in English as one of: "high", "medium", "low", "info" (DO NOT translate the severity level string).
+   - "explanation": Translate the explanation into fluent, natural ${targetLanguage}.
+3. Translate "summary", "plainLanguage", "missing", "obligations" (yours & clients), and "lawyerQuestions" into natural, professional ${targetLanguage} suitable for a freelancer.
+4. Do NOT use crude literal machine translation. Use real, culturally natural phrasing that a native speaker easily understands.
+5. Return ONLY valid JSON, with NO surrounding markdown fences or preamble.
+
+Input JSON:
+${JSON.stringify(analysis, null, 2)}
+`
+
+  const raw = await geminiChat(prompt, true)
+  return cleanAndParseJson<ContractAnalysis>(raw)
+}

@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import multer from 'multer'
 import { randomUUID } from 'crypto'
 import { saveNewSession, getSession, updateSession } from '../services/sessionStore'
-import { extractTextFromImage, analyzeContract } from '../services/gemini'
+import { extractTextFromImage, analyzeContract, askContractQuestion, translateAnalysis } from '../services/gemini'
 import { ContractSession } from '../models/contract'
 
 const router = Router()
@@ -143,6 +143,107 @@ router.get('/report/:sessionId', async (req: Request, res: Response, next: NextF
     res.json({
       sessionId,
       ...session.analysis,
+      generatedAt: new Date().toISOString(),
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────
+// POST /api/contracts/ask
+// Ask follow-up questions about the contract
+// ─────────────────────────────────────────────────────────────
+router.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { sessionId, question, history } = req.body as {
+      sessionId: string
+      question: string
+      history?: Array<{ role: 'user' | 'assistant'; content: string }>
+    }
+
+    if (!sessionId || !question?.trim()) {
+      res.status(400).json({ error: 'sessionId and question are required.' })
+      return
+    }
+
+    const session = await getSession(sessionId)
+    if (!session || !session.extractedText) {
+      res.status(404).json({ error: 'Contract session not found.' })
+      return
+    }
+
+    const answer = await askContractQuestion(
+      session.extractedText,
+      question.trim(),
+      history || []
+    )
+
+    // Save to chat history
+    const existingHistory = session.chatHistory || []
+    const updatedHistory = [
+      ...existingHistory,
+      { role: 'user' as const, content: question.trim(), ts: new Date().toISOString() },
+      { role: 'assistant' as const, content: answer, ts: new Date().toISOString() },
+    ]
+    await updateSession(sessionId, { chatHistory: updatedHistory })
+
+    res.json({ answer, question: question.trim() })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────
+// POST /api/contracts/translate
+// Translate the contract analysis into Hindi or Telugu via AI
+// ─────────────────────────────────────────────────────────────
+router.post('/translate', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { sessionId, targetLanguage } = req.body as {
+      sessionId: string
+      targetLanguage: 'Hindi' | 'Telugu'
+    }
+
+    if (!sessionId || !['Hindi', 'Telugu'].includes(targetLanguage)) {
+      res.status(400).json({ error: 'Valid sessionId and targetLanguage (Hindi or Telugu) are required.' })
+      return
+    }
+
+    const session = await getSession(sessionId)
+    if (!session || !session.analysis) {
+      res.status(404).json({ error: 'Contract report not found for this session.' })
+      return
+    }
+
+    // Check cached translation
+    const cached = session.translations?.[targetLanguage]
+    if (cached) {
+      res.json({
+        sessionId,
+        targetLanguage,
+        ...cached,
+        generatedAt: new Date().toISOString(),
+      })
+      return
+    }
+
+    // Translate via Gemini
+    const translated = await translateAnalysis(session.analysis, targetLanguage)
+
+    // Cache translation
+    const currentTranslations = session.translations || {}
+    await updateSession(sessionId, {
+      translations: {
+        ...currentTranslations,
+        [targetLanguage]: translated,
+      },
+    })
+
+    res.json({
+      sessionId,
+      targetLanguage,
+      ...translated,
       generatedAt: new Date().toISOString(),
     })
   } catch (err) {
