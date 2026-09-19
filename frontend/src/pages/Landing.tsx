@@ -19,7 +19,7 @@ const features = [
   },
   {
     icon: '📋',
-    title: 'What's missing',
+    title: "What's missing",
     body: 'Sift spots absent clauses — no IP ownership, no kill-fee, no dispute resolution — before you sign.',
   },
   {

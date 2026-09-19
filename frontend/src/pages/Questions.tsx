@@ -15,7 +15,7 @@ interface Question {
 const QUESTIONS: Question[] = [
   {
     id: 'role',
-    label: 'What's your role in this contract?',
+    label: "What's your role in this contract?",
     type: 'radio',
     options: ['Freelancer / Contractor', 'Consultant', 'Agency', 'Employee (reviewing offer)', 'Other'],
     required: true,
@@ -36,7 +36,7 @@ const QUESTIONS: Question[] = [
   },
   {
     id: 'concerns',
-    label: 'Anything specific you're worried about or want us to focus on?',
+    label: "Anything specific you're worried about or want us to focus on?",
     type: 'text',
     placeholder: 'e.g. IP ownership, late payment, non-compete, termination terms…',
     required: false,

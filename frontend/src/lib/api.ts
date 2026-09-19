@@ -18,7 +18,13 @@ async function request<T>(
 
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(body || `HTTP ${res.status}`)
+    try {
+      const parsed = JSON.parse(body)
+      throw new Error(parsed.error || parsed.message || body)
+    } catch (e: any) {
+      if (e.message && e.message !== body && !e.message.startsWith('Unexpected token')) throw e
+      throw new Error(body || `HTTP ${res.status}`)
+    }
   }
 
   return res.json() as Promise<T>

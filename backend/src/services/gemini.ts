@@ -10,18 +10,23 @@ import { ContractAnalysis } from '../models/contract'
 import { buildAnalysisPrompt } from '../prompts/analysisPrompt'
 
 const GEMINI_ENDPOINT =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
 
 interface GeminiResponse {
-  candidates: Array<{
-    content: { parts: Array<{ text: string }> }
+  candidates?: Array<{
+    content?: { parts?: Array<{ text?: string }> }
+    finishReason?: string
   }>
+  error?: {
+    code: number
+    message: string
+  }
 }
 
 /**
  * Send a text prompt to Gemini and return the raw text response.
  */
-async function geminiChat(prompt: string): Promise<string> {
+async function geminiChat(prompt: string, jsonMode = false): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set in .env')
 
@@ -32,7 +37,8 @@ async function geminiChat(prompt: string): Promise<string> {
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.2,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
+        ...(jsonMode ? { responseMimeType: 'application/json' } : {}),
       },
     }),
   })
@@ -43,7 +49,17 @@ async function geminiChat(prompt: string): Promise<string> {
   }
 
   const data = (await res.json()) as GeminiResponse
-  return data.candidates[0]?.content?.parts[0]?.text ?? ''
+  if (data.error) {
+    throw new Error(`Gemini error: ${data.error.message}`)
+  }
+
+  const candidate = data.candidates?.[0]
+  const text = candidate?.content?.parts?.[0]?.text
+  if (!text) {
+    throw new Error(`Gemini returned empty text (finish reason: ${candidate?.finishReason ?? 'unknown'})`)
+  }
+
+  return text
 }
 
 /**
@@ -76,7 +92,46 @@ export async function extractTextFromImage(
   }
 
   const data = (await res.json()) as GeminiResponse
-  return data.candidates[0]?.content?.parts[0]?.text ?? ''
+  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+}
+
+/**
+ * Resilient JSON parsing helper
+ */
+function cleanAndParseJson<T>(raw: string): T {
+  const text = raw.trim()
+
+  // 1. Direct parse
+  try {
+    return JSON.parse(text) as T
+  } catch {}
+
+  // 2. Strip code fences
+  const stripped = text
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim()
+  try {
+    return JSON.parse(stripped) as T
+  } catch {}
+
+  // 3. Find outer braces
+  const start = stripped.indexOf('{')
+  const end = stripped.lastIndexOf('}')
+  if (start !== -1 && end !== -1 && end > start) {
+    const candidate = stripped.slice(start, end + 1)
+    try {
+      return JSON.parse(candidate) as T
+    } catch {}
+
+    // 4. Try removing trailing commas
+    const fixedCommas = candidate.replace(/,\s*([}\]])/g, '$1')
+    try {
+      return JSON.parse(fixedCommas) as T
+    } catch {}
+  }
+
+  throw new Error('Failed to parse Gemini response as JSON. Raw: ' + raw.slice(0, 300))
 }
 
 /**
@@ -87,14 +142,8 @@ export async function analyzeContract(
   userAnswers: Record<string, string>
 ): Promise<ContractAnalysis> {
   const prompt = buildAnalysisPrompt(contractText, userAnswers)
-  const raw = await geminiChat(prompt)
+  // Request strict JSON response with responseMimeType: 'application/json'
+  const raw = await geminiChat(prompt, true)
 
-  // Strip markdown code fences if present
-  const cleaned = raw.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim()
-
-  try {
-    return JSON.parse(cleaned) as ContractAnalysis
-  } catch {
-    throw new Error('Failed to parse Gemini response as JSON. Raw: ' + cleaned.slice(0, 300))
-  }
+  return cleanAndParseJson<ContractAnalysis>(raw)
 }

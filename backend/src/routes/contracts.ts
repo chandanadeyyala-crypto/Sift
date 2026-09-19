@@ -1,8 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import multer from 'multer'
 import { randomUUID } from 'crypto'
-import { FieldValue } from 'firebase-admin/firestore'
-import { db } from '../services/firebase'
+import { saveNewSession, getSession, updateSession } from '../services/sessionStore'
 import { extractTextFromImage, analyzeContract } from '../services/gemini'
 import { ContractSession } from '../models/contract'
 
@@ -66,16 +65,13 @@ router.post(
       // Detect contract type heuristically (refined by AI in next step)
       const contractType = detectContractType(extractedText)
 
-      // Persist session to Firestore
+      // Persist session
       const sessionId = randomUUID()
-      const sessionRef = db.collection('sessions').doc(sessionId)
-      await sessionRef.set({
+      await saveNewSession({
         sessionId,
         extractedText,
         contractType,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      } satisfies Omit<ContractSession, 'createdAt' | 'updatedAt'> & { createdAt: unknown; updatedAt: unknown })
+      })
 
       res.json({ sessionId, contractType, extractedText: extractedText.slice(0, 500) + '…' })
     } catch (err) {
@@ -100,23 +96,19 @@ router.post('/analyze', async (req: Request, res: Response, next: NextFunction) 
       return
     }
 
-    const sessionRef = db.collection('sessions').doc(sessionId)
-    const snap = await sessionRef.get()
-    if (!snap.exists) {
+    const session = await getSession(sessionId)
+    if (!session || !session.extractedText) {
       res.status(404).json({ error: 'Session not found.' })
       return
     }
-
-    const session = snap.data() as ContractSession
 
     // Run AI analysis
     const analysis = await analyzeContract(session.extractedText, answers ?? {})
 
     // Save result
-    await sessionRef.update({
+    await updateSession(sessionId, {
       userAnswers: answers ?? {},
       analysis,
-      updatedAt: FieldValue.serverTimestamp(),
     })
 
     res.json({
@@ -136,14 +128,13 @@ router.post('/analyze', async (req: Request, res: Response, next: NextFunction) 
 router.get('/report/:sessionId', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { sessionId } = req.params
-    const snap = await db.collection('sessions').doc(sessionId).get()
+    const session = await getSession(sessionId)
 
-    if (!snap.exists) {
+    if (!session) {
       res.status(404).json({ error: 'Report not found.' })
       return
     }
 
-    const session = snap.data() as ContractSession
     if (!session.analysis) {
       res.status(404).json({ error: 'Analysis not complete yet.' })
       return
@@ -152,7 +143,7 @@ router.get('/report/:sessionId', async (req: Request, res: Response, next: NextF
     res.json({
       sessionId,
       ...session.analysis,
-      generatedAt: session.updatedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+      generatedAt: new Date().toISOString(),
     })
   } catch (err) {
     next(err)
