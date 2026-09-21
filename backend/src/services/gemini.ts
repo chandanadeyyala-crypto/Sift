@@ -11,8 +11,9 @@
 import { ContractAnalysis } from '../models/contract'
 import { buildAnalysisPrompt } from '../prompts/analysisPrompt'
 
-const GEMINI_ENDPOINT =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash'
+const getGeminiEndpoint = (model = GEMINI_MODEL) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
 
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions'
 
@@ -40,10 +41,16 @@ interface GroqResponse {
 }
 
 /**
- * Call the Gemini API with a specific key.
+ * Call the Gemini API with a specific key and model.
  */
-async function callGemini(prompt: string, jsonMode = false, apiKey: string): Promise<string> {
-  const res = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+async function callGemini(
+  prompt: string,
+  jsonMode = false,
+  apiKey: string,
+  model = GEMINI_MODEL
+): Promise<string> {
+  const endpoint = getGeminiEndpoint(model)
+  const res = await fetch(`${endpoint}?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -116,9 +123,10 @@ async function callGroq(prompt: string, jsonMode = false, apiKey: string): Promi
 
 /**
  * Executes a text/JSON completion prompt across available AI providers in prioritized order:
- * 1. Primary Gemini (GEMINI_API_KEY)
- * 2. Backup Gemini (GEMINI_API_KEY_BACKUP or GEMINI_BACKUP_API_KEY)
- * 3. Groq (GROQ_API_KEY)
+ * 1. Primary Gemini (GEMINI_API_KEY with gemini-3.6-flash)
+ * 2. Backup Gemini (GEMINI_API_KEY_BACKUP with gemini-3.6-flash)
+ * 3. Backup Gemini (GEMINI_API_KEY_BACKUP with gemini-flash-latest)
+ * 4. Groq (GROQ_API_KEY)
  */
 async function geminiChat(prompt: string, jsonMode = false): Promise<string> {
   const primaryGeminiKey = process.env.GEMINI_API_KEY?.trim()
@@ -137,15 +145,19 @@ async function geminiChat(prompt: string, jsonMode = false): Promise<string> {
 
   if (primaryGeminiKey) {
     candidates.push({
-      name: 'Gemini (Primary)',
-      invoke: () => callGemini(prompt, jsonMode, primaryGeminiKey),
+      name: 'Gemini (Primary Key - gemini-3.6-flash)',
+      invoke: () => callGemini(prompt, jsonMode, primaryGeminiKey, 'gemini-3.6-flash'),
     })
   }
 
   if (backupGeminiKey && backupGeminiKey !== primaryGeminiKey) {
     candidates.push({
-      name: 'Gemini (Backup Key)',
-      invoke: () => callGemini(prompt, jsonMode, backupGeminiKey),
+      name: 'Gemini (Backup Key - gemini-3.6-flash)',
+      invoke: () => callGemini(prompt, jsonMode, backupGeminiKey, 'gemini-3.6-flash'),
+    })
+    candidates.push({
+      name: 'Gemini (Backup Key - gemini-flash-latest)',
+      invoke: () => callGemini(prompt, jsonMode, backupGeminiKey, 'gemini-flash-latest'),
     })
   }
 
@@ -169,7 +181,7 @@ async function geminiChat(prompt: string, jsonMode = false): Promise<string> {
     try {
       const result = await candidate.invoke()
       if (i > 0) {
-        // Fallback succeeded
+        console.log(`[AI Service] Successfully recovered using fallback provider: ${candidate.name}`)
       }
       return result
     } catch (err: unknown) {
@@ -192,9 +204,11 @@ async function geminiChat(prompt: string, jsonMode = false): Promise<string> {
 async function callGeminiVision(
   base64Image: string,
   mimeType: string,
-  apiKey: string
+  apiKey: string,
+  model = GEMINI_MODEL
 ): Promise<string> {
-  const res = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+  const endpoint = getGeminiEndpoint(model)
+  const res = await fetch(`${endpoint}?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -230,10 +244,13 @@ export async function extractTextFromImage(
     process.env.GEMINI_BACKUP_API_KEY?.trim()
   )
 
-  const candidates: Array<{ name: string; key: string }> = []
-  if (primaryGeminiKey) candidates.push({ name: 'Gemini Primary', key: primaryGeminiKey })
+  const candidates: Array<{ name: string; key: string; model: string }> = []
+  if (primaryGeminiKey) {
+    candidates.push({ name: 'Gemini Primary (gemini-3.6-flash)', key: primaryGeminiKey, model: 'gemini-3.6-flash' })
+  }
   if (backupGeminiKey && backupGeminiKey !== primaryGeminiKey) {
-    candidates.push({ name: 'Gemini Backup Key', key: backupGeminiKey })
+    candidates.push({ name: 'Gemini Backup (gemini-3.6-flash)', key: backupGeminiKey, model: 'gemini-3.6-flash' })
+    candidates.push({ name: 'Gemini Backup (gemini-flash-latest)', key: backupGeminiKey, model: 'gemini-flash-latest' })
   }
 
   if (candidates.length === 0) {
@@ -245,9 +262,9 @@ export async function extractTextFromImage(
   for (let i = 0; i < candidates.length; i++) {
     const candidate = candidates[i]
     try {
-      const text = await callGeminiVision(base64Image, mimeType, candidate.key)
+      const text = await callGeminiVision(base64Image, mimeType, candidate.key, candidate.model)
       if (i > 0) {
-        // Fallback succeeded
+        console.log(`[AI OCR] Successfully extracted text using fallback: ${candidate.name}`)
       }
       return text
     } catch (err: unknown) {

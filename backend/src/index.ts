@@ -5,6 +5,15 @@ import contractRoutes from './routes/contracts'
 import { errorHandler } from './middleware/errorHandler'
 import { requestLogger } from './middleware/requestLogger'
 
+// ── Global Process Safety Nets ─────────────────────────────
+process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+  console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason)
+})
+
+process.on('uncaughtException', (error: Error) => {
+  console.error('[FATAL] Uncaught Exception thrown:', error)
+})
+
 const app = express()
 const PORT = Number(process.env.PORT) || 4000
 const HOST = '0.0.0.0'
