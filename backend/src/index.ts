@@ -10,13 +10,23 @@ const PORT = Number(process.env.PORT) || 4000
 const HOST = '0.0.0.0'
 
 // ── Middleware ─────────────────────────────────────────────
+const configuredOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((url) => url.trim().replace(/\/$/, ''))
+  .filter(Boolean)
+
+const devOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://127.0.0.1:5173']
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.FRONTEND_URL || '']
-  : ['http://localhost:5173', process.env.FRONTEND_URL || '']
+  ? configuredOrigins
+  : [...new Set([...devOrigins, ...configuredOrigins])]
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin) {
+      return callback(null, true)
+    }
+    const normalizedOrigin = origin.replace(/\/$/, '')
+    if (allowedOrigins.length === 0 || allowedOrigins.includes(normalizedOrigin)) {
       callback(null, true)
     } else {
       callback(new Error('Not allowed by CORS'))

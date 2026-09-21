@@ -30,7 +30,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         await signup(email, password, name)
       }
       onClose()
-    } catch (err: unknown) {`n      const error = err as Error & { code?: string }
+    } catch (err: unknown) {
+      const error = err as Error & { code?: string }
       const msg = error?.code?.replace('auth/', '').replace(/-/g, ' ') || error?.message || 'Authentication error'
       setLocalError(msg)
     } finally {
@@ -44,7 +45,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
     try {
       await loginWithGoogle()
       onClose()
-    } catch (err: unknown) {`n      const error = err as Error & { code?: string }
+    } catch (err: unknown) {
+      const error = err as Error & { code?: string }
       const msg = error?.code?.replace('auth/', '').replace(/-/g, ' ') || error?.message || 'Google sign-in error'
       setLocalError(msg)
     } finally {
@@ -95,7 +97,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           }}
           aria-label="Close"
         >
-          ×
+          &times;
         </button>
 
         <h3 style={{ marginBottom: 'var(--space-2)' }}>
@@ -162,7 +164,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             <input
               type="password"
               className="input"
-              placeholder="••••••••"
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -176,7 +178,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             style={{ width: '100%', marginTop: 'var(--space-2)' }}
             disabled={submitting}
           >
-            {submitting ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
+            {submitting ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
 
@@ -239,4 +241,3 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
     </div>
   )
 }
-
