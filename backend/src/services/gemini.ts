@@ -1,9 +1,11 @@
 // ─────────────────────────────────────────────────────────────
-// Gemini API Service
+// Multi-Tier AI Service (Gemini with Groq & Secondary Key Fallback)
 //
-// HOW TO ADD YOUR KEY:
-//   GEMINI_API_KEY → https://aistudio.google.com/app/apikey
-//   Paste into backend/.env
+// HOW TO CONFIGURE KEYS in backend/.env:
+//   GEMINI_API_KEY        → Primary Gemini API key (https://aistudio.google.com/app/apikey)
+//   GEMINI_API_KEY_BACKUP → Optional secondary Gemini API key for quota/rate limit backup
+//   GROQ_API_KEY          → Groq API key for high-speed fallback (https://console.groq.com/keys)
+//   GROQ_MODEL            → Optional model override (default: openai/gpt-oss-120b)
 // ─────────────────────────────────────────────────────────────
 
 import { ContractAnalysis } from '../models/contract'
@@ -11,6 +13,8 @@ import { buildAnalysisPrompt } from '../prompts/analysisPrompt'
 
 const GEMINI_ENDPOINT =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
+
+const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions'
 
 interface GeminiResponse {
   candidates?: Array<{
@@ -23,13 +27,22 @@ interface GeminiResponse {
   }
 }
 
-/**
- * Send a text prompt to Gemini and return the raw text response.
- */
-async function geminiChat(prompt: string, jsonMode = false): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) throw new Error('GEMINI_API_KEY is not set in .env')
+interface GroqResponse {
+  choices?: Array<{
+    message?: { content?: string }
+    finish_reason?: string
+  }>
+  error?: {
+    message: string
+    code?: string
+    type?: string
+  }
+}
 
+/**
+ * Call the Gemini API with a specific key.
+ */
+async function callGemini(prompt: string, jsonMode = false, apiKey: string): Promise<string> {
   const res = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -45,7 +58,7 @@ async function geminiChat(prompt: string, jsonMode = false): Promise<string> {
 
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(`Gemini API error ${res.status}: ${body}`)
+    throw new Error(`Gemini API error (${res.status}): ${body}`)
   }
 
   const data = (await res.json()) as GeminiResponse
@@ -63,15 +76,124 @@ async function geminiChat(prompt: string, jsonMode = false): Promise<string> {
 }
 
 /**
- * Send an image (base64) + text to Gemini Vision for OCR.
+ * Call the Groq API with a specific key.
  */
-export async function extractTextFromImage(
-  base64Image: string,
-  mimeType: string
-): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) throw new Error('GEMINI_API_KEY is not set in .env')
+async function callGroq(prompt: string, jsonMode = false, apiKey: string): Promise<string> {
+  const model = process.env.GROQ_MODEL || 'openai/gpt-oss-120b'
 
+  const res = await fetch(GROQ_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2,
+      max_tokens: 8192,
+      ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
+    }),
+  })
+
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`Groq API error (${res.status}): ${body}`)
+  }
+
+  const data = (await res.json()) as GroqResponse
+  if (data.error) {
+    throw new Error(`Groq error: ${data.error.message}`)
+  }
+
+  const text = data.choices?.[0]?.message?.content
+  if (!text) {
+    throw new Error(`Groq returned empty text (finish reason: ${data.choices?.[0]?.finish_reason ?? 'unknown'})`)
+  }
+
+  return text
+}
+
+/**
+ * Executes a text/JSON completion prompt across available AI providers in prioritized order:
+ * 1. Primary Gemini (GEMINI_API_KEY)
+ * 2. Backup Gemini (GEMINI_API_KEY_BACKUP or GEMINI_BACKUP_API_KEY)
+ * 3. Groq (GROQ_API_KEY)
+ */
+async function geminiChat(prompt: string, jsonMode = false): Promise<string> {
+  const primaryGeminiKey = process.env.GEMINI_API_KEY?.trim()
+  const backupGeminiKey = (
+    process.env.GEMINI_API_KEY_BACKUP?.trim() ||
+    process.env.GEMINI_BACKUP_API_KEY?.trim()
+  )
+  const groqKey = process.env.GROQ_API_KEY?.trim()
+
+  type ProviderCandidate = {
+    name: string
+    invoke: () => Promise<string>
+  }
+
+  const candidates: ProviderCandidate[] = []
+
+  if (primaryGeminiKey) {
+    candidates.push({
+      name: 'Gemini (Primary)',
+      invoke: () => callGemini(prompt, jsonMode, primaryGeminiKey),
+    })
+  }
+
+  if (backupGeminiKey && backupGeminiKey !== primaryGeminiKey) {
+    candidates.push({
+      name: 'Gemini (Backup Key)',
+      invoke: () => callGemini(prompt, jsonMode, backupGeminiKey),
+    })
+  }
+
+  if (groqKey) {
+    candidates.push({
+      name: `Groq (${process.env.GROQ_MODEL || 'openai/gpt-oss-120b'})`,
+      invoke: () => callGroq(prompt, jsonMode, groqKey),
+    })
+  }
+
+  if (candidates.length === 0) {
+    throw new Error(
+      'No AI API keys configured. Please set GEMINI_API_KEY, GEMINI_API_KEY_BACKUP, or GROQ_API_KEY in backend/.env'
+    )
+  }
+
+  const errors: string[] = []
+
+  for (let i = 0; i < candidates.length; i++) {
+    const candidate = candidates[i]
+    try {
+      const result = await candidate.invoke()
+      if (i > 0) {
+        console.log(`[AI Service] Successfully served request using fallback provider: ${candidate.name}`)
+      }
+      return result
+    } catch (err: any) {
+      const errorMsg = err?.message || String(err)
+      errors.push(`${candidate.name}: ${errorMsg}`)
+      console.warn(`[AI Service] ${candidate.name} failed: ${errorMsg}`)
+
+      if (i < candidates.length - 1) {
+        console.log(`[AI Service] Attempting fallback to ${candidates[i + 1].name}...`)
+      }
+    }
+  }
+
+  throw new Error(`All AI providers failed:\n${errors.join('\n')}`)
+}
+
+/**
+ * Call Gemini Vision for document text extraction (OCR).
+ */
+async function callGeminiVision(
+  base64Image: string,
+  mimeType: string,
+  apiKey: string
+): Promise<string> {
   const res = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -88,11 +210,57 @@ export async function extractTextFromImage(
 
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(`Gemini Vision error ${res.status}: ${body}`)
+    throw new Error(`Gemini Vision error (${res.status}): ${body}`)
   }
 
   const data = (await res.json()) as GeminiResponse
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+}
+
+/**
+ * Send an image or PDF (base64) to Gemini Vision for OCR with primary & backup key fallback.
+ */
+export async function extractTextFromImage(
+  base64Image: string,
+  mimeType: string
+): Promise<string> {
+  const primaryGeminiKey = process.env.GEMINI_API_KEY?.trim()
+  const backupGeminiKey = (
+    process.env.GEMINI_API_KEY_BACKUP?.trim() ||
+    process.env.GEMINI_BACKUP_API_KEY?.trim()
+  )
+
+  const candidates: Array<{ name: string; key: string }> = []
+  if (primaryGeminiKey) candidates.push({ name: 'Gemini Primary', key: primaryGeminiKey })
+  if (backupGeminiKey && backupGeminiKey !== primaryGeminiKey) {
+    candidates.push({ name: 'Gemini Backup Key', key: backupGeminiKey })
+  }
+
+  if (candidates.length === 0) {
+    throw new Error('No Gemini API key available for document text extraction. Please set GEMINI_API_KEY or GEMINI_API_KEY_BACKUP in .env')
+  }
+
+  const errors: string[] = []
+
+  for (let i = 0; i < candidates.length; i++) {
+    const candidate = candidates[i]
+    try {
+      const text = await callGeminiVision(base64Image, mimeType, candidate.key)
+      if (i > 0) {
+        console.log(`[AI OCR] Successfully extracted text using ${candidate.name}`)
+      }
+      return text
+    } catch (err: any) {
+      const msg = err?.message || String(err)
+      errors.push(`${candidate.name}: ${msg}`)
+      console.warn(`[AI OCR] ${candidate.name} failed: ${msg}`)
+      if (i < candidates.length - 1) {
+        console.log(`[AI OCR] Attempting OCR with ${candidates[i + 1].name}...`)
+      }
+    }
+  }
+
+  throw new Error(`Document text extraction failed:\n${errors.join('\n')}`)
 }
 
 /**
@@ -131,20 +299,18 @@ function cleanAndParseJson<T>(raw: string): T {
     } catch {}
   }
 
-  throw new Error('Failed to parse Gemini response as JSON. Raw: ' + raw.slice(0, 300))
+  throw new Error('Failed to parse AI response as JSON. Raw: ' + raw.slice(0, 300))
 }
 
 /**
- * Run the full contract analysis through Gemini.
+ * Run the full contract analysis through AI (Gemini primary -> Gemini backup -> Groq fallback).
  */
 export async function analyzeContract(
   contractText: string,
   userAnswers: Record<string, string>
 ): Promise<ContractAnalysis> {
   const prompt = buildAnalysisPrompt(contractText, userAnswers)
-  // Request strict JSON response with responseMimeType: 'application/json'
   const raw = await geminiChat(prompt, true)
-
   return cleanAndParseJson<ContractAnalysis>(raw)
 }
 

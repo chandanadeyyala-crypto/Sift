@@ -54,8 +54,10 @@ cp backend/.env.example backend/.env
 
 | Variable | Where to find it |
 |---|---|
-| `GEMINI_API_KEY` | https://aistudio.google.com/app/apikey |
-| `GROQ_API_KEY` | https://console.groq.com/keys (reserved for future use) |
+| `GEMINI_API_KEY` | https://aistudio.google.com/app/apikey (Primary AI engine) |
+| `GEMINI_API_KEY_BACKUP` | (Optional) Secondary Gemini key for automatic rate-limit/quota failover |
+| `GROQ_API_KEY` | https://console.groq.com/keys (Automatic fallback when Gemini is unavailable) |
+| `GROQ_MODEL` | (Optional) Groq model override (default: `openai/gpt-oss-120b`) |
 | `FIREBASE_PROJECT_ID` | Firebase Console → Project Settings → Service Accounts → Generate new private key |
 | `FIREBASE_CLIENT_EMAIL` | Same JSON file |
 | `FIREBASE_PRIVATE_KEY` | Same JSON file — keep quotes, literal `\n` |
@@ -90,7 +92,7 @@ Frontend proxies `/api/*` to `http://localhost:4000` automatically.
 |---|---|
 | Frontend | Vite 5, React 18, TypeScript, react-router-dom v6 |
 | Auth / DB | Firebase (client SDK + Admin SDK + Firestore) |
-| AI | Gemini 1.5 Flash (OCR + analysis) |
+| AI | Gemini 2.5 Flash + Groq (Llama / GPT-OSS fallback) + Secondary Gemini key backup |
 | Backend | Node 20, Express 4, Multer, CORS, dotenv |
 | Styling | Vanilla CSS (white + sage #445D48 + sand #D6CC99) |
 
