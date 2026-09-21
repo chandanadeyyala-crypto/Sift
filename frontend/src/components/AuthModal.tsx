@@ -30,8 +30,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         await signup(email, password, name)
       }
       onClose()
-    } catch (err: any) {
-      const msg = err?.code?.replace('auth/', '').replace(/-/g, ' ') || err?.message || 'Authentication error'
+    } catch (err: unknown) {`n      const error = err as Error & { code?: string }
+      const msg = error?.code?.replace('auth/', '').replace(/-/g, ' ') || error?.message || 'Authentication error'
       setLocalError(msg)
     } finally {
       setSubmitting(false)
@@ -44,8 +44,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
     try {
       await loginWithGoogle()
       onClose()
-    } catch (err: any) {
-      const msg = err?.code?.replace('auth/', '').replace(/-/g, ' ') || err?.message || 'Google sign-in error'
+    } catch (err: unknown) {`n      const error = err as Error & { code?: string }
+      const msg = error?.code?.replace('auth/', '').replace(/-/g, ' ') || error?.message || 'Google sign-in error'
       setLocalError(msg)
     } finally {
       setSubmitting(false)
@@ -239,3 +239,4 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
     </div>
   )
 }
+

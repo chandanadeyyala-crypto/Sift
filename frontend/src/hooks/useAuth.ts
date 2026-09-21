@@ -28,8 +28,9 @@ export function useAuth() {
     setAuthError(null)
     try {
       await signInWithEmailAndPassword(auth, email, pass)
-    } catch (err: any) {
-      setAuthError(err.message || 'Login failed')
+    } catch (err: unknown) {
+      const error = err as Error
+      setAuthError(error.message || 'Login failed')
       throw err
     }
   }
@@ -41,8 +42,9 @@ export function useAuth() {
       if (displayName && cred.user) {
         await updateProfile(cred.user, { displayName })
       }
-    } catch (err: any) {
-      setAuthError(err.message || 'Signup failed')
+    } catch (err: unknown) {
+      const error = err as Error
+      setAuthError(error.message || 'Signup failed')
       throw err
     }
   }
@@ -52,8 +54,9 @@ export function useAuth() {
     try {
       const provider = new GoogleAuthProvider()
       await signInWithPopup(auth, provider)
-    } catch (err: any) {
-      setAuthError(err.message || 'Google sign-in failed')
+    } catch (err: unknown) {
+      const error = err as Error
+      setAuthError(error.message || 'Google sign-in failed')
       throw err
     }
   }
@@ -62,8 +65,9 @@ export function useAuth() {
     setAuthError(null)
     try {
       await fbSignOut(auth)
-    } catch (err: any) {
-      setAuthError(err.message || 'Sign out failed')
+    } catch (err: unknown) {
+      const error = err as Error
+      setAuthError(error.message || 'Sign out failed')
       throw err
     }
   }

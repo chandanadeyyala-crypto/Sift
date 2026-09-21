@@ -7,6 +7,17 @@ import { ContractSession } from '../models/contract'
 
 const router = Router()
 
+// ── Rate Limiting ──────────────────────────────────────────
+import rateLimit from 'express-rate-limit'
+
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 upload requests per `window`
+  message: { error: 'Too many uploads from this IP, please try again after 15 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
 // ── Multer: store file in memory (no disk writes) ──────────
 const ALLOWED_MIMETYPES = new Set([
   'application/pdf',
@@ -19,6 +30,13 @@ const ALLOWED_MIMETYPES = new Set([
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIMETYPES.has(file.mimetype)) {
+      cb(null, true)
+    } else {
+      cb(new Error(`Unsupported file type: ${file.mimetype}. Use PDF, JPG, PNG, WebP, or TXT.`))
+    }
+  }
 })
 
 // ─────────────────────────────────────────────────────────────
@@ -28,7 +46,18 @@ const upload = multer({
 // ─────────────────────────────────────────────────────────────
 router.post(
   '/upload',
-  upload.single('contract'),
+  uploadLimiter,
+  (req, res, next) => {
+    upload.single('contract')(req, res, (err) => {
+      if (err) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(413).json({ error: 'File too large. Maximum size is 20MB.' })
+        }
+        return res.status(415).json({ error: err.message })
+      }
+      next()
+    })
+  },
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.file) {
@@ -37,11 +66,6 @@ router.post(
       }
 
       const { mimetype, buffer } = req.file
-
-      if (!ALLOWED_MIMETYPES.has(mimetype)) {
-        res.status(415).json({ error: `Unsupported file type: ${mimetype}. Use PDF, JPG, PNG, WebP, or TXT.` })
-        return
-      }
       let extractedText = ''
 
       if (mimetype === 'text/plain') {

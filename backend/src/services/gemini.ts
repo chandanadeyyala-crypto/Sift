@@ -169,11 +169,11 @@ async function geminiChat(prompt: string, jsonMode = false): Promise<string> {
     try {
       const result = await candidate.invoke()
       if (i > 0) {
-        console.log(`[AI Service] Successfully served request using fallback provider: ${candidate.name}`)
+        // Fallback succeeded
       }
       return result
-    } catch (err: any) {
-      const errorMsg = err?.message || String(err)
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
       errors.push(`${candidate.name}: ${errorMsg}`)
       console.warn(`[AI Service] ${candidate.name} failed: ${errorMsg}`)
 
@@ -247,11 +247,11 @@ export async function extractTextFromImage(
     try {
       const text = await callGeminiVision(base64Image, mimeType, candidate.key)
       if (i > 0) {
-        console.log(`[AI OCR] Successfully extracted text using ${candidate.name}`)
+        // Fallback succeeded
       }
       return text
-    } catch (err: any) {
-      const msg = err?.message || String(err)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
       errors.push(`${candidate.name}: ${msg}`)
       console.warn(`[AI OCR] ${candidate.name} failed: ${msg}`)
       if (i < candidates.length - 1) {

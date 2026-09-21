@@ -23,8 +23,8 @@ async function request<T>(
     try {
       const parsed = JSON.parse(body)
       throw new Error(parsed.error || parsed.message || body)
-    } catch (e: any) {
-      if (e.message && e.message !== body && !e.message.startsWith('Unexpected token')) throw e
+    } catch (e) {
+      if (e instanceof Error && e.message && e.message !== body && !e.message.startsWith('Unexpected token')) throw e
       throw new Error(body || `HTTP ${res.status}`)
     }
   }
