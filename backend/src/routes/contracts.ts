@@ -68,17 +68,26 @@ router.post(
       const { mimetype, buffer } = req.file
       let extractedText = ''
 
-      if (mimetype === 'text/plain') {
-        // Plain text — decode directly
-        extractedText = buffer.toString('utf-8')
-      } else if (mimetype === 'application/pdf') {
-        // PDF — send to Gemini Vision as base64
-        const b64 = buffer.toString('base64')
-        extractedText = await extractTextFromImage(b64, 'application/pdf')
-      } else {
-        // Image — send to Gemini Vision
-        const b64 = buffer.toString('base64')
-        extractedText = await extractTextFromImage(b64, mimetype)
+      try {
+        if (mimetype === 'text/plain') {
+          // Plain text — decode directly
+          extractedText = buffer.toString('utf-8')
+        } else if (mimetype === 'application/pdf') {
+          // PDF — send to Gemini Vision as base64
+          const b64 = buffer.toString('base64')
+          extractedText = await extractTextFromImage(b64, 'application/pdf')
+        } else {
+          // Image — send to Gemini Vision
+          const b64 = buffer.toString('base64')
+          extractedText = await extractTextFromImage(b64, mimetype)
+        }
+      } catch (extractErr) {
+        console.error('[contracts/upload] Document text extraction failed:', extractErr)
+        res.status(422).json({
+          error: 'Failed to extract text from document. Please ensure the file is readable or try plain text (.txt).',
+          details: extractErr instanceof Error ? extractErr.message : String(extractErr),
+        })
+        return
       }
 
       if (!extractedText || !extractedText.trim()) {

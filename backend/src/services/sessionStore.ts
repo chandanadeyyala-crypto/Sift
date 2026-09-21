@@ -22,6 +22,17 @@ export function setFirestoreDisabledForTesting(disabled: boolean): void {
   firestoreDisabled = disabled
 }
 
+function isFirestoreUnavailable(error: FirebaseError): boolean {
+  return (
+    error?.code === 5 ||
+    error?.code === 7 ||
+    error?.code === 'NOT_FOUND' ||
+    error?.code === 'PERMISSION_DENIED' ||
+    Boolean(error?.message?.includes('Cloud Firestore API')) ||
+    Boolean(error?.message?.includes('NOT_FOUND'))
+  )
+}
+
 export async function saveNewSession(session: {
   sessionId: string
   extractedText: string
@@ -46,9 +57,9 @@ export async function saveNewSession(session: {
     })
   } catch (err: unknown) {
     const error = err as FirebaseError
-    if (error?.code === 7 || error?.message?.includes('Cloud Firestore API')) {
+    if (isFirestoreUnavailable(error)) {
       firestoreDisabled = true
-      console.warn('⚠️ Cloud Firestore API is disabled in project. Using resilient in-memory session store.')
+      console.warn('⚠️ Cloud Firestore Database unavailable or not found. Falling back to resilient in-memory store.')
     } else {
       console.error('[sessionStore] Firestore write error for sessionId', session.sessionId, error)
     }
@@ -68,9 +79,9 @@ export async function getSession(sessionId: string): Promise<Partial<ContractSes
       }
     } catch (err: unknown) {
       const error = err as FirebaseError
-      if (error?.code === 7 || error?.message?.includes('Cloud Firestore API')) {
+      if (isFirestoreUnavailable(error)) {
         firestoreDisabled = true
-        console.warn('⚠️ Cloud Firestore API disabled. Reading from memory store.')
+        console.warn('⚠️ Cloud Firestore Database unavailable. Reading from resilient in-memory store.')
       } else {
         console.error('[sessionStore] Firestore getSession error for sessionId:', sessionId, error)
       }
@@ -103,7 +114,7 @@ export async function updateSession(
     }, { merge: true })
   } catch (err: unknown) {
     const error = err as FirebaseError
-    if (error?.code === 7 || error?.message?.includes('Cloud Firestore API')) {
+    if (isFirestoreUnavailable(error)) {
       firestoreDisabled = true
     } else {
       console.error('[sessionStore] Firestore update error for sessionId:', sessionId, error)

@@ -8,14 +8,9 @@ export function errorHandler(
 ): void {
   console.error('[error]', err)
   const status = (err as Error & { status?: number }).status ?? 500
-  
-  // Sanitize message for 500s in production
-  const isProd = process.env.NODE_ENV === 'production'
-  const safeMessage = (isProd && status === 500) 
-    ? 'Internal server error' 
-    : (err.message || 'Internal server error')
+  const message = err.message || 'Internal server error'
 
   res.status(status).json({
-    error: safeMessage,
+    error: message,
   })
 }
