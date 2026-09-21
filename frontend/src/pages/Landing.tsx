@@ -128,8 +128,8 @@ export default function Landing() {
           </p>
 
           <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {/* Hero CTA: preview output before committing — something a generic template can't offer */}
-            <Link to="/upload?sample=1" className="btn btn-primary btn-lg" id="hero-sample-report-btn">
+            {/* Hero CTA: preview output before committing — shows a real report with no upload needed */}
+            <Link to="/report/sample" className="btn btn-primary btn-lg" id="hero-sample-report-btn">
               See a sample report
             </Link>
             <a href="#how-it-works" className="btn btn-ghost btn-lg">

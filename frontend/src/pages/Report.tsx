@@ -16,8 +16,129 @@ interface ChatMessage {
   ts: string
 }
 
+const SAMPLE_REPORT: ReportResponse = {
+  sessionId: 'sample',
+  summary: 'Bangalore Studio Freelance Master Services Agreement (MSA) & SOW for Product Design.',
+  plainLanguage: 'This is a standard client-favored services agreement. While the scope of work is clear, the payment and liability terms expose you to significant delayed payment and unlimited liability risks. Specific attention is needed on clause 4 (Payment upon acceptance) and clause 9 (IP assignment).',
+  risks: [
+    {
+      clause: 'Payment upon acceptance (Clause 4.2)',
+      severity: 'high',
+      explanation: '"Payment shall be released within sixty (60) business days of final client acceptance of all deliverables." Acceptance is undefined and entirely at the client\'s discretion, stretching payment out to 3+ months with no late fee.',
+    },
+    {
+      clause: 'Unlimited Indemnity & Liability (Clause 8.1)',
+      severity: 'high',
+      explanation: 'You are required to indemnify the client against any third-party claims without an aggregate liability cap, while the client caps their total liability to fees paid in the preceding month.',
+    },
+    {
+      clause: 'Work-for-hire IP Assignment prior to full payment (Clause 9.3)',
+      severity: 'medium',
+      explanation: 'IP transfers automatically upon creation rather than upon receipt of full payment. If the client delays or defaults on payment, you have already assigned ownership of your designs.',
+    },
+    {
+      clause: 'Post-Termination Non-Solicitation Restraint (Clause 12.1)',
+      severity: 'medium',
+      explanation: 'Restricts you from performing services for any client contacts or partner vendors for 12 months after contract completion.',
+    },
+  ],
+  missing: [
+    'Late payment interest clause (standard 1.5% per month for Indian MSME/freelancers)',
+    'Deemed acceptance period (acceptance deemed granted if client provides no written feedback within 7 business days)',
+    'Portfolio and case-study usage rights for non-confidential deliverables',
+    'Kill fee / pro-rata compensation for work completed prior to early convenience termination',
+  ],
+  obligations: {
+    yours: [
+      'Deliver completed design tokens and wireframes per the project timeline',
+      'Provide up to two rounds of design revisions per sprint',
+      'Protect confidential client materials for 2 years post-engagement',
+    ],
+    clients: [
+      'Provide brand guidelines and assets within 3 business days of kickoff',
+      'Designate a single authorized stakeholder for deliverable approvals',
+      'Pay invoiced milestones according to agreed payment terms',
+    ],
+  },
+  lawyerQuestions: [
+    'Can we insert a 7-day deemed acceptance clause so client review delays don\'t postpone invoice approvals?',
+    'Can we cap my total liability under this agreement to 100% of the total fees actually received?',
+    'Can we clarify that intellectual property rights transfer only upon receipt of full and final payment?',
+  ],
+  generatedAt: new Date().toISOString(),
+}
+
+const SAMPLE_REPORT_HINDI: ReportResponse = {
+  ...SAMPLE_REPORT,
+  summary: 'बैंगलोर स्टूडियो फ्रीलांस मास्टर सर्विसेज एग्रीमेंट (MSA) और प्रोडक्ट डिज़ाइन के लिए SOW।',
+  plainLanguage: 'यह एक मानक अनुबंध है जो क्लाइंट के पक्ष में झुका हुआ है। हालांकि काम का दायरा स्पष्ट है, लेकिन भुगतान और देयता (liability) की शर्तें आपके लिए भुगतान में देरी और असीमित जोखिम पैदा करती हैं। विशेष रूप से धारा 4 (स्वीकृति पर भुगतान) और धारा 9 (IP असाइनमेंट) पर ध्यान देने की आवश्यकता है।',
+  risks: [
+    {
+      clause: 'स्वीकृति पर भुगतान (धारा 4.2)',
+      severity: 'high',
+      explanation: '"सभी डिलिवरेबल्स की अंतिम क्लाइंट स्वीकृति के 60 व्यावसायिक दिनों के भीतर भुगतान जारी किया जाएगा।" स्वीकृति की कोई स्पष्ट परिभाषा नहीं है, जिससे 3+ महीने तक भुगतान में देरी हो सकती है और कोई विलंब शुल्क भी नहीं है।',
+    },
+    {
+      clause: 'असीमित क्षतिपूर्ति और देयता (धारा 8.1)',
+      severity: 'high',
+      explanation: 'आपको बिना किसी सीमा के तीसरे पक्ष के दावों के लिए क्लाइंट की क्षतिपूर्ति करनी होगी, जबकि क्लाइंट की देयता पिछले महीने भुगतान किए गए शुल्क तक सीमित है।',
+    },
+    {
+      clause: 'पूर्ण भुगतान से पहले IP असाइनमेंट (धारा 9.3)',
+      severity: 'medium',
+      explanation: 'बौद्धिक संपदा (IP) निर्माण के समय ही ट्रांसफर हो जाती है, न कि पूर्ण भुगतान मिलने पर। यदि क्लाइंट भुगतान में चूक करता है, तो भी स्वामित्व उनके पास चला जाएगा।',
+    },
+    {
+      clause: 'समाप्ति के बाद गैर-प्रलोभन प्रतिबंध (धारा 12.1)',
+      severity: 'medium',
+      explanation: 'अनुबंध पूरा होने के बाद 12 महीने तक क्लाइंट के किसी भी संपर्क या सहयोगी के साथ काम करने पर रोक लगाता है।',
+    },
+  ],
+  missing: [
+    'विलंबित भुगतान पर ब्याज खंड (भारतीय MSME/फ्रीलांसरों के लिए 1.5% प्रति माह मानक)',
+    'स्वतः स्वीकृति अवधि (यदि 7 दिनों में कोई लिखित आपत्ति नहीं है तो स्वीकृति मानी जाएगी)',
+    'पोर्टफोलियो और केस-स्टडी में काम दिखाने का अधिकार',
+    'जल्दी अनुबंध समाप्त होने पर किए गए कार्य का आनुपातिक भुगतान (Kill Fee)',
+  ],
+}
+
+const SAMPLE_REPORT_TELUGU: ReportResponse = {
+  ...SAMPLE_REPORT,
+  summary: 'బెంగళూరు స్టూడియో ఫ్రీలాన్స్ మాస్టర్ సర్వీసెస్ అగ్రిమెంట్ (MSA) మరియు ప్రాడక్ట్ డిజైన్ కొరకు SOW.',
+  plainLanguage: 'ఇది క్లయింట్‌కు అనుకూలంగా రూపొందించబడిన ప్రామాణిక ఒప్పందం. పని పరిధి స్పష్టంగా ఉన్నప్పటికీ, చెల్లింపు మరియు బాధ్యత నిబంధనలు మీకు ఆలస్య చెల్లింపులు మరియు అధిక నష్టభయాన్ని కలిగిస్తాయి. నిబంధన 4 (ఆమోదంపై చెల్లింపు) మరియు నిబంధన 9 (IP బదిలీ) పై ప్రత్యేక శ్రద్ధ అవసరం.',
+  risks: [
+    {
+      clause: 'ఆమోదం తర్వాతే చెల్లింపు (నిబంధన 4.2)',
+      severity: 'high',
+      explanation: '"తుది క్లయింట్ ఆమోదం పొందిన అరవై (60) పనిదినాల్లోపు చెల్లింపు విడుదల చేయబడుతుంది." ఆమోదానికి సరైన గడువు లేకపోవడం వల్ల చెల్లింపు 3 నెలలకు పైగా ఆలస్యం కావచ్చు మరియు ఎటువంటి ఆలస్య వడ్డీ కూడా ఉండదు.',
+    },
+    {
+      clause: 'అపరిమిత నష్టపరిహార బాధ్యత (నిబంధన 8.1)',
+      severity: 'high',
+      explanation: 'ఎటువంటి పరిమితి లేకుండా క్లయింట్‌కు పూర్తి నష్టపరిహారం చెల్లించాల్సిన బాధ్యత మీపై ఉంటుంది, కానీ క్లయింట్ బాధ్యత కేవలం గత నెల ఫీజుకే పరిమితం చేయబడింది.',
+    },
+    {
+      clause: 'పూర్తి చెల్లింపు రాకముందే IP బదిలీ (నిబంధన 9.3)',
+      severity: 'medium',
+      explanation: 'పూర్తి చెల్లింపు అందిన తర్వాత కాకుండా, డిజైన్ రూపొందించిన వెంటనే హక్కులు క్లయింట్‌కు బదిలీ అవుతాయి. క్లయింట్ చెల్లింపులో విఫలమైనా డిజైన్ల యాజమాన్యం వారిదే అవుతుంది.',
+    },
+    {
+      clause: 'ఒప్పందం ముగిసిన తర్వాత ఇతర క్లయింట్లతో పని చేయకూడదనే నిబంధన (నిబంధన 12.1)',
+      severity: 'medium',
+      explanation: 'ప్రాజెక్ట్ పూర్తయిన 12 నెలల వరకు క్లయింట్ సంబంధీకులతో లేదా భాగస్వాములతో కలిసి పనిచేయకుండా నిరోధిస్తుంది.',
+    },
+  ],
+  missing: [
+    'ఆలస్య చెల్లింపులపై వడ్డీ నిబంధన (నెలకి 1.5% ప్రామాణిక వడ్డీ)',
+    '7 పనిదినాల్లో లిఖితపూర్వక అభ్యంతరం తెలపకపోతే ఆమోదించినట్లు పరిగణించే నిబంధన',
+    'పూర్తయిన పనిని మీ పోర్ట్‌ఫోలియో మరియు కేస్ స్టడీలలో ప్రదర్శించే హక్కు',
+    'ఒప్పందం అర్ధాంతరంగా రద్దయితే చేసిన పనికి చెల్లింపు (కిల్ ఫీ)',
+  ],
+}
+
 export default function Report() {
   const { sessionId } = useParams<{ sessionId: string }>()
+  const isSample = sessionId === 'sample'
   const [baseReport, setBaseReport] = useState<ReportResponse | null>(null)
   const [translations, setTranslations] = useState<Record<string, ReportResponse>>({})
   const [currentLang, setCurrentLang] = useState<'en' | 'Hindi' | 'Telugu'>('en')
@@ -36,6 +157,18 @@ export default function Report() {
 
   useEffect(() => {
     if (!sessionId) return
+
+    if (sessionId === 'sample') {
+      setBaseReport(SAMPLE_REPORT)
+      setTranslations({
+        en: SAMPLE_REPORT,
+        Hindi: SAMPLE_REPORT_HINDI,
+        Telugu: SAMPLE_REPORT_TELUGU,
+      })
+      setLoading(false)
+      return
+    }
+
     getReport(sessionId)
       .then((data) => {
         setBaseReport(data)
@@ -63,6 +196,12 @@ export default function Report() {
     }
 
     if (translations[targetLang]) {
+      setCurrentLang(targetLang)
+      return
+    }
+
+    // Sample mode: translations are pre-baked above, should never reach here
+    if (isSample) {
       setCurrentLang(targetLang)
       return
     }
@@ -99,6 +238,22 @@ export default function Report() {
 
     setChatHistory((prev) => [...prev, userMsg])
     setQuestion('')
+
+    // Sample mode: return a canned demo answer without touching the backend
+    if (isSample) {
+      setTimeout(() => {
+        setChatHistory((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: "This is a sample contract preview. Upload your own contract to get a real answer specific to your agreement's clauses.",
+            ts: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ])
+        setAsking(false)
+      }, 600)
+      return
+    }
 
     try {
       const res = await askQuestion({
@@ -147,10 +302,40 @@ export default function Report() {
     <div className="page-shell">
       <Nav step={3} />
 
+      {/* Sample mode banner */}
+      {isSample && (
+        <div
+          className="no-print"
+          style={{
+            background: 'linear-gradient(135deg, var(--color-sage-faint) 0%, rgba(68,93,72,0.08) 100%)',
+            borderBottom: '1px solid rgba(68,93,72,0.18)',
+            padding: 'var(--space-3) var(--space-6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 'var(--space-4)',
+            flexWrap: 'wrap',
+          }}
+        >
+          <span style={{ fontSize: '0.875rem', color: 'var(--color-ink-soft)' }}>
+            <strong style={{ color: 'var(--color-sage)' }}>Sample report</strong>
+            {' '}— This is a real analysis of a Bangalore studio contract, anonymised for this preview.
+          </span>
+          <Link
+            to="/upload"
+            className="btn btn-primary"
+            style={{ fontSize: '0.875rem', padding: '6px 16px', whiteSpace: 'nowrap' }}
+          >
+            Analyse your contract →
+          </Link>
+        </div>
+      )}
+
       <main style={{ flex: 1, padding: 'var(--space-10) var(--space-6) var(--space-20)' }}>
         <div className="content-center fade-up">
 
-          {/* Step indicator */}
+          {/* Step indicator — hidden for sample */}
+          {!isSample && (
           <div
             className="no-print"
             style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-8)' }}
@@ -164,6 +349,7 @@ export default function Report() {
               Step 3 of 3 — Your report
             </span>
           </div>
+          )}
 
           {/* AI Language Translation Selector */}
           <div

@@ -9,31 +9,53 @@ const app = express()
 const PORT = Number(process.env.PORT) || 4000
 const HOST = '0.0.0.0'
 
-// ── Middleware ─────────────────────────────────────────────
+// ── CORS Configuration ─────────────────────────────────────
 const configuredOrigins = (process.env.FRONTEND_URL || '')
   .split(',')
   .map((url) => url.trim().replace(/\/$/, ''))
   .filter(Boolean)
 
-const devOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://127.0.0.1:5173']
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? configuredOrigins
-  : [...new Set([...devOrigins, ...configuredOrigins])]
-
-app.use(cors({
+const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
+    // Allow server-to-server, curl, mobile, and health check requests without origin
     if (!origin) {
       return callback(null, true)
     }
+
     const normalizedOrigin = origin.replace(/\/$/, '')
-    if (allowedOrigins.length === 0 || allowedOrigins.includes(normalizedOrigin)) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
+
+    // Check configured FRONTEND_URL(s)
+    if (configuredOrigins.includes(normalizedOrigin) || configuredOrigins.includes('*')) {
+      return callback(null, true)
     }
+
+    // Automatically allow all Vercel deployments (production and preview branches)
+    if (/^https:\/\/([a-zA-Z0-9_-]+\.)*vercel\.app$/.test(normalizedOrigin)) {
+      return callback(null, true)
+    }
+
+    // Automatically allow local development
+    if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalizedOrigin)) {
+      return callback(null, true)
+    }
+
+    // Allow all in development/test if not matched above
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true)
+    }
+
+    // Reject gracefully without throwing an unhandled exception
+    callback(null, false)
   },
   credentials: true,
-}))
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 86400, // 24 hours preflight cache
+}
+
+app.use(cors(corsOptions))
+app.options('*', cors(corsOptions))
 
 app.use(express.json())
 app.use(requestLogger)
