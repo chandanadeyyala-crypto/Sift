@@ -7,6 +7,7 @@ import { requestLogger } from './middleware/requestLogger'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 4000
+const HOST = '0.0.0.0'
 
 // ── Middleware ─────────────────────────────────────────────
 app.use(cors({
@@ -27,8 +28,10 @@ app.get('/api/health', (_req, res) => {
 // ── Error handling (must be last) ─────────────────────────
 app.use(errorHandler)
 
-app.listen(PORT, () => {
-  console.log(`\n🔍 Sift API running on http://localhost:${PORT}\n`)
-})
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, HOST, () => {
+    console.log(`\n🔍 Sift API running on http://${HOST}:${PORT}\n`)
+  })
+}
 
 export default app
