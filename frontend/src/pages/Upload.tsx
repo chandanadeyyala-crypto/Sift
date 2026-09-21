@@ -146,13 +146,36 @@ export default function Upload() {
             </div>
           )}
 
-          {/* Submit */}
-          <div style={{ marginTop: 'var(--space-8)', display: 'flex', justifyContent: 'flex-end' }}>
+          {/* Submit & Reset actions */}
+          <div style={{
+            marginTop: 'var(--space-8)',
+            display: 'flex',
+            justifyContent: fileState ? 'space-between' : 'flex-end',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 'var(--space-3)',
+          }}>
+            {fileState && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setFileState(null)
+                  setError(null)
+                  if (inputRef.current) inputRef.current.value = ''
+                }}
+                disabled={loading}
+              >
+                ✕ Remove & choose another
+              </button>
+            )}
+
             <button
               id="upload-submit-btn"
               className="btn btn-primary btn-lg"
               disabled={!fileState || loading}
               onClick={handleSubmit}
+              style={{ minWidth: 160 }}
             >
               {loading ? (
                 <>
@@ -165,9 +188,21 @@ export default function Upload() {
             </button>
           </div>
 
-          <p style={{ marginTop: 'var(--space-6)', fontSize: '0.8125rem', color: 'var(--color-muted)' }}>
-            🔒 Your file is processed server-side and not stored beyond your session.
-          </p>
+          <div style={{
+            marginTop: 'var(--space-8)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 'var(--space-3)',
+            fontSize: '0.8125rem',
+            color: 'var(--color-muted)',
+          }}>
+            <span>🔒 Processed server-side and deleted after analysis.</span>
+            <a href="/report/sample" style={{ color: 'var(--color-sage)', fontWeight: 500 }}>
+              Want to see an example? View sample report →
+            </a>
+          </div>
         </div>
       </main>
     </div>

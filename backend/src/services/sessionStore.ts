@@ -4,7 +4,7 @@ import { ContractSession } from '../models/contract'
 
 // In-memory fallback map for when Firestore is not yet activated or has permission issues
 const memoryStore = new Map<string, Partial<ContractSession>>()
-let firestoreDisabled = false
+let firestoreDisabled = process.env.NODE_ENV === 'test' || !process.env.FIREBASE_PRIVATE_KEY
 
 type FirebaseError = Error & { code?: number | string }
 

@@ -354,13 +354,8 @@ export default function Report() {
           {/* AI Language Translation Selector */}
           <div
             id="report-lang-selector"
-            className="no-print"
+            className="no-print report-lang-bar"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 'var(--space-3)',
               marginBottom: 'var(--space-6)',
               padding: 'var(--space-3) var(--space-4)',
               backgroundColor: 'var(--color-sand-faint)',
@@ -381,7 +376,7 @@ export default function Report() {
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+            <div className="report-lang-buttons">
               <button
                 type="button"
                 onClick={() => handleLanguageChange('en')}
@@ -435,23 +430,33 @@ export default function Report() {
           <div id="report-printable">
             {/* Document Header */}
             <div style={{ marginBottom: 'var(--space-8)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+              <div className="report-header-row">
                 <h2 style={{ marginBottom: 'var(--space-2)', color: 'var(--color-sage)' }}>
                   Contract Analysis Report
                 </h2>
-                <span
-                  style={{
-                    fontSize: '0.8rem',
-                    padding: '3px 10px',
-                    borderRadius: 'var(--radius-pill)',
-                    backgroundColor: 'var(--color-sage-faint)',
-                    color: 'var(--color-sage)',
-                    border: '1px solid var(--color-border)',
-                    fontWeight: 600,
-                  }}
-                >
-                  {currentLang === 'Hindi' ? 'हिन्दी अनुवाद' : currentLang === 'Telugu' ? 'తెలుగు అనువాదం' : 'Plain-Language Review'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                  <Link
+                    to="/upload"
+                    className="no-print btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.8rem', padding: '4px 10px' }}
+                    id="report-header-new-btn"
+                  >
+                    + Analyse new contract
+                  </Link>
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      padding: '3px 10px',
+                      borderRadius: 'var(--radius-pill)',
+                      backgroundColor: 'var(--color-sage-faint)',
+                      color: 'var(--color-sage)',
+                      border: '1px solid var(--color-border)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {currentLang === 'Hindi' ? 'हिन्दी अनुवाद' : currentLang === 'Telugu' ? 'తెలుగు అనువాదం' : 'Plain-Language Review'}
+                  </span>
+                </div>
               </div>
               <p style={{ maxWidth: '100%', fontSize: '0.875rem', color: 'var(--color-muted)' }}>
                 Generated {new Date(activeReport.generatedAt).toLocaleDateString('en-US', {
@@ -506,7 +511,7 @@ export default function Report() {
 
             {/* Obligations */}
             <Section title="Who owes what" icon="⚖️">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-5)' }}>
+              <div className="obligations-grid">
                 <ObligationList title="You owe" items={activeReport.obligations.yours} />
                 <ObligationList title="Client owes" items={activeReport.obligations.clients} />
               </div>
@@ -673,7 +678,7 @@ export default function Report() {
             )}
 
             {/* Input form */}
-            <form onSubmit={handleAskSubmit} style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <form onSubmit={handleAskSubmit} className="ask-form">
               <input
                 type="text"
                 className="input"

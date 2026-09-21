@@ -27,7 +27,7 @@ export default function Nav({ step }: NavProps) {
           </Link>
 
           {step && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <div className="nav-step-dots" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
               {[1, 2, 3].map((s) => (
                 <div
                   key={s}
@@ -38,22 +38,10 @@ export default function Nav({ step }: NavProps) {
             </div>
           )}
 
-          <nav aria-label="Main navigation" style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', marginRight: '48px' }}>
+          <nav aria-label="Main navigation" className="nav-menu">
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-2)',
-                    fontSize: '0.85rem',
-                    color: 'var(--color-ink)',
-                    backgroundColor: 'var(--color-sage-faint)',
-                    padding: '4px 10px',
-                    borderRadius: 'var(--radius-pill)',
-                    border: '1px solid var(--color-border)',
-                  }}
-                >
+              <div className="nav-auth-group">
+                <div className="nav-user-badge">
                   <span
                     style={{
                       width: 22,
@@ -70,44 +58,43 @@ export default function Nav({ step }: NavProps) {
                   >
                     {(user.displayName || user.email || 'U')[0].toUpperCase()}
                   </span>
-                  <span style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {user.displayName || user.email?.split('@')[0]}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => logout()}
-                  className="btn btn-ghost btn-sm"
-                  style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                  className="btn btn-ghost btn-sm nav-btn-compact"
+                  style={{ padding: '6px 10px', fontSize: '0.8rem' }}
                 >
                   Sign Out
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <div className="nav-auth-group">
                 <button
                   type="button"
                   onClick={() => openAuth('login')}
-                  className="btn btn-ghost btn-sm"
+                  className="btn btn-ghost btn-sm nav-btn-compact"
                   id="nav-login-btn"
-                  style={{ padding: '6px 12px', fontSize: '0.875rem' }}
                 >
                   Log In
                 </button>
                 <button
                   type="button"
                   onClick={() => openAuth('signup')}
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-secondary btn-sm nav-btn-compact"
                   id="nav-signup-btn"
-                  style={{ padding: '6px 14px', fontSize: '0.875rem' }}
                 >
                   Sign Up
                 </button>
               </div>
             )}
 
-            <Link to="/upload" className="btn btn-primary btn-sm" id="nav-upload-btn">
-              Analyse contract
+            <Link to="/upload" className="btn btn-primary btn-sm nav-btn-compact" id="nav-upload-btn">
+              <span className="nav-btn-text-full">Analyse contract</span>
+              <span className="nav-btn-text-short">Analyse</span>
             </Link>
           </nav>
         </div>

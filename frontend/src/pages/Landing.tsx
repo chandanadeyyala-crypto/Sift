@@ -127,9 +127,13 @@ export default function Landing() {
             IP assignments that swallow your portfolio rights. Sift names them.
           </p>
 
-          <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {/* Hero CTA: preview output before committing — shows a real report with no upload needed */}
-            <Link to="/report/sample" className="btn btn-primary btn-lg" id="hero-sample-report-btn">
+          <div className="hero-cta-group">
+            {/* Primary CTA: Start fresh with your own contract */}
+            <Link to="/upload" className="btn btn-primary btn-lg" id="hero-analyse-btn">
+              Analyse contract
+            </Link>
+            {/* Secondary CTA: Preview what a report looks like */}
+            <Link to="/report/sample" className="btn btn-secondary btn-lg" id="hero-sample-report-btn">
               See a sample report
             </Link>
             <a href="#how-it-works" className="btn btn-ghost btn-lg">
@@ -246,11 +250,7 @@ export default function Landing() {
             </p>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: 'var(--space-5)',
-          }}>
+          <div className="features-grid">
             {features.map((f) => (
               <div
                 key={f.title}
@@ -301,13 +301,7 @@ export default function Landing() {
           <p style={{ textAlign: 'center', color: 'var(--color-ink-soft)', marginBottom: 'var(--space-8)', maxWidth: '50ch', marginInline: 'auto' }}>
             Sift checks every contract for these specific absences — and tells you what their absence means for you.
           </p>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: 'var(--space-4)',
-            maxWidth: '800px',
-            marginInline: 'auto',
-          }}>
+          <div className="absences-grid">
             {[
               { label: 'Kill fee / cancellation payment', detail: 'If the client kills the project mid-way, what do you receive?' },
               { label: 'Late-payment interest', detail: 'Net 60 with no interest clause is free credit for the client.' },

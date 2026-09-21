@@ -377,13 +377,258 @@ a:hover { text-decoration: underline; }
   animation: fadeUp 0.4s ease both;
 }
 
-/* ── Responsive ───────────────────────────────────────────── */
+/* ── Layout Helpers ───────────────────────────────────────── */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-5);
+}
+
+.absences-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-4);
+  max-width: 800px;
+  margin-inline: auto;
+}
+
+.obligations-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+}
+
+.hero-cta-group {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.nav-menu {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin-right: 48px;
+}
+
+.nav-auth-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.nav-user-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--color-ink);
+  background-color: var(--color-sage-faint);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+}
+
+.ask-form {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.report-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.nav-btn-text-short {
+  display: none;
+}
+
+.nav-btn-text-full {
+  display: inline;
+}
+
+.report-lang-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.report-lang-buttons {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ── Responsive Breakpoints ───────────────────────────────── */
+
+/* Large Tablets & Small Laptops (<= 1024px) */
+@media (max-width: 1024px) {
+  :root {
+    --space-16: 48px;
+    --space-20: 64px;
+  }
+}
+
+/* Tablets (<= 768px) */
+@media (max-width: 768px) {
+  :root {
+    --space-12: 36px;
+    --space-16: 40px;
+    --space-20: 48px;
+  }
+
+  .nav {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .nav-menu {
+    gap: var(--space-2);
+    margin-right: 40px;
+  }
+
+  .obligations-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .flowing-leaf-container {
+    top: 12px !important;
+    right: 12px !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .flowing-leaf-container svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+/* Mobile Devices (<= 640px) */
 @media (max-width: 640px) {
   :root {
     --space-6: 16px;
-    --space-8: 24px;
+    --space-8: 20px;
+    --space-10: 28px;
+    --space-12: 32px;
   }
-  .card { padding: var(--space-6); }
+
+  body {
+    font-size: 15px;
+  }
+
+  .content-center,
+  .content-wide {
+    padding-inline: var(--space-4);
+  }
+
+  .card {
+    padding: var(--space-5) var(--space-4);
+    border-radius: var(--radius-md);
+  }
+
+  .hero-cta-group {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .hero-cta-group .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .absences-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .upload-zone {
+    padding: var(--space-10) var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+
+  .report-lang-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .report-lang-buttons {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+
+  .report-lang-buttons .btn {
+    width: 100%;
+    padding: 6px 4px !important;
+    font-size: 0.78rem !important;
+    justify-content: center;
+  }
+
+  .ask-form {
+    flex-direction: column;
+  }
+
+  .ask-form button {
+    width: 100%;
+  }
+
+  .btn-lg {
+    padding: var(--space-3) var(--space-5);
+    font-size: 0.95rem;
+  }
+}
+
+/* Small Mobile (<= 480px) */
+@media (max-width: 480px) {
+  :root {
+    --space-4: 12px;
+    --space-5: 16px;
+    --space-6: 16px;
+  }
+
+  .nav-inner {
+    gap: var(--space-2);
+  }
+
+  .nav-menu {
+    margin-right: 0 !important;
+    gap: 6px !important;
+  }
+
+  .nav-step-dots {
+    display: none !important;
+  }
+
+  .nav-logo {
+    font-size: 1.25rem !important;
+  }
+
+  .nav-btn-compact {
+    padding: 4px 8px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .flowing-leaf-container {
+    display: none !important;
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
 }
 
 /* ── Leaf Flow Animation ──────────────────────────────────── */
