@@ -6,7 +6,7 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
-  console.error('[error]', err.message)
+  console.error('[error]', err)
   const status = (err as Error & { status?: number }).status ?? 500
   
   // Sanitize message for 500s in production

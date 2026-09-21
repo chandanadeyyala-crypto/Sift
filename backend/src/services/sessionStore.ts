@@ -8,13 +8,27 @@ let firestoreDisabled = process.env.NODE_ENV === 'test' || !process.env.FIREBASE
 
 type FirebaseError = Error & { code?: number | string }
 
+/**
+ * Resets the in-memory cache. Used in tests to simulate process recycling / restarts.
+ */
+export function clearMemoryStoreForTesting(): void {
+  memoryStore.clear()
+}
+
+/**
+ * Allows tests to force-enable or force-disable Firestore simulation.
+ */
+export function setFirestoreDisabledForTesting(disabled: boolean): void {
+  firestoreDisabled = disabled
+}
+
 export async function saveNewSession(session: {
   sessionId: string
   extractedText: string
   contractType: string
 }): Promise<void> {
-  // Always store in memory cache
   const now = FieldValue.serverTimestamp()
+  // Store in memory cache for immediate access
   memoryStore.set(session.sessionId, {
     ...session,
     createdAt: now as unknown as FirebaseFirestore.Timestamp,
@@ -36,27 +50,34 @@ export async function saveNewSession(session: {
       firestoreDisabled = true
       console.warn('⚠️ Cloud Firestore API is disabled in project. Using resilient in-memory session store.')
     } else {
-      console.warn('⚠️ Firestore write error, falling back to memory store:', error?.message)
+      console.error('[sessionStore] Firestore write error for sessionId', session.sessionId, error)
     }
   }
 }
 
 export async function getSession(sessionId: string): Promise<Partial<ContractSession> | null> {
+  // 1. Try reading from persistent Firestore first
   if (!firestoreDisabled) {
     try {
       const snap = await db.collection('sessions').doc(sessionId).get()
       if (snap.exists) {
-        return snap.data() as ContractSession
+        const data = snap.data() as ContractSession
+        // Warm up memory store with fresh persistent data
+        memoryStore.set(sessionId, data)
+        return data
       }
     } catch (err: unknown) {
       const error = err as FirebaseError
       if (error?.code === 7 || error?.message?.includes('Cloud Firestore API')) {
         firestoreDisabled = true
         console.warn('⚠️ Cloud Firestore API disabled. Reading from memory store.')
+      } else {
+        console.error('[sessionStore] Firestore getSession error for sessionId:', sessionId, error)
       }
     }
   }
 
+  // 2. Fall back to memory store
   return memoryStore.get(sessionId) || null
 }
 
@@ -75,16 +96,17 @@ export async function updateSession(
 
   try {
     const sessionRef = db.collection('sessions').doc(sessionId)
-    await sessionRef.update({
+    // Use set with merge: true so it doesn't fail if the doc was somehow omitted
+    await sessionRef.set({
       ...data,
       updatedAt: FieldValue.serverTimestamp(),
-    })
+    }, { merge: true })
   } catch (err: unknown) {
     const error = err as FirebaseError
     if (error?.code === 7 || error?.message?.includes('Cloud Firestore API')) {
       firestoreDisabled = true
     } else {
-      console.warn('⚠️ Firestore update error, falling back to memory store:', error?.message)
+      console.error('[sessionStore] Firestore update error for sessionId:', sessionId, error)
     }
   }
 }

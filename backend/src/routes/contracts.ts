@@ -122,12 +122,23 @@ router.post('/analyze', async (req: Request, res: Response, next: NextFunction) 
 
     const session = await getSession(sessionId)
     if (!session || !session.extractedText) {
-      res.status(404).json({ error: 'Session not found.' })
+      console.warn(`[contracts/analyze] Session ${sessionId} not found or expired in persistent store.`)
+      res.status(404).json({ error: 'Session not found or expired. Please upload your contract again.' })
       return
     }
 
-    // Run AI analysis
-    const analysis = await analyzeContract(session.extractedText, answers ?? {})
+    // Run AI analysis with dedicated error handling and logging
+    let analysis
+    try {
+      analysis = await analyzeContract(session.extractedText, answers ?? {})
+    } catch (aiErr) {
+      console.error(`[contracts/analyze] Gemini/AI analysis failed for session ${sessionId}:`, aiErr)
+      res.status(502).json({
+        error: 'Failed to analyze contract with AI provider. Please try again.',
+        details: aiErr instanceof Error ? aiErr.message : String(aiErr),
+      })
+      return
+    }
 
     // Save result
     await updateSession(sessionId, {
