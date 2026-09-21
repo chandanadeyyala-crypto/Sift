@@ -81,7 +81,7 @@ router.post(
         extractedText = await extractTextFromImage(b64, mimetype)
       }
 
-      if (!extractedText.trim()) {
+      if (!extractedText || !extractedText.trim()) {
         res.status(422).json({ error: 'Could not extract text from the uploaded file.' })
         return
       }
