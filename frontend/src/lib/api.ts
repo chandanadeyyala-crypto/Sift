@@ -3,7 +3,9 @@
 // Base URL resolves to the Vite dev proxy (/api → localhost:4000)
 // ─────────────────────────────────────────────────────────────
 
-const BASE = '/api'
+const BASE = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api`
+  : '/api'
 
 async function request<T>(
   path: string,
