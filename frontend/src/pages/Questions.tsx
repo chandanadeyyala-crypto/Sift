@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import Nav from '@/components/Nav'
 import { submitAnswers } from '@/lib/api'
 
@@ -100,16 +100,21 @@ export default function Questions() {
       <main style={{ flex: 1, padding: 'var(--space-12) var(--space-6)' }}>
         <div className="content-center">
 
-          {/* Step indicator */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-8)' }}>
-            <div className="step-bar">
-              <div className="step-dot done" />
-              <div className="step-dot active" />
-              <div className="step-dot" />
+          {/* Top nav row: step indicator + back link */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)', marginBottom: 'var(--space-8)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+              <div className="step-bar">
+                <div className="step-dot done" />
+                <div className="step-dot active" />
+                <div className="step-dot" />
+              </div>
+              <span style={{ fontSize: '0.875rem', color: 'var(--color-muted)' }}>
+                Step 2 of 3 — Quick questions
+              </span>
             </div>
-            <span style={{ fontSize: '0.875rem', color: 'var(--color-muted)' }}>
-              Step 2 of 3 — Quick questions
-            </span>
+            <Link to="/upload" className="btn btn-ghost btn-sm" id="questions-back-upload-btn">
+              ← Back to upload
+            </Link>
           </div>
 
           {/* Progress bar */}
@@ -197,15 +202,24 @@ export default function Questions() {
           )}
 
           {/* Navigation */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button
-              className="btn btn-ghost"
-              onClick={handleBack}
-              disabled={current === 0}
-              id="questions-back-btn"
-            >
-              ← Back
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+            {current === 0 ? (
+              <Link
+                to="/upload"
+                className="btn btn-ghost"
+                id="questions-back-btn"
+              >
+                ← Back
+              </Link>
+            ) : (
+              <button
+                className="btn btn-ghost"
+                onClick={handleBack}
+                id="questions-back-btn"
+              >
+                ← Back
+              </button>
+            )}
 
             <button
               className="btn btn-primary"
@@ -236,6 +250,17 @@ export default function Questions() {
               This question is optional — you can skip it.
             </p>
           )}
+
+          {/* Escape hatch: start completely over */}
+          <div style={{ textAlign: 'center', marginTop: 'var(--space-8)', paddingTop: 'var(--space-6)', borderTop: '1px solid var(--color-border)' }}>
+            <Link
+              to="/"
+              style={{ fontSize: '0.8125rem', color: 'var(--color-muted)' }}
+              id="questions-start-over-btn"
+            >
+              Start over from home
+            </Link>
+          </div>
         </div>
       </main>
     </div>

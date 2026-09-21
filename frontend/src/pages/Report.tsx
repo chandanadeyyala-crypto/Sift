@@ -334,21 +334,31 @@ export default function Report() {
       <main style={{ flex: 1, padding: 'var(--space-10) var(--space-6) var(--space-20)' }}>
         <div className="content-center fade-up">
 
-          {/* Step indicator — hidden for sample */}
+          {/* Top nav row — hidden for sample */}
           {!isSample && (
-          <div
-            className="no-print"
-            style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-8)' }}
-          >
-            <div className="step-bar">
-              <div className="step-dot done" />
-              <div className="step-dot done" />
-              <div className="step-dot active" />
+            <div
+              className="no-print"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)', marginBottom: 'var(--space-8)' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                <div className="step-bar">
+                  <div className="step-dot done" />
+                  <div className="step-dot done" />
+                  <div className="step-dot active" />
+                </div>
+                <span style={{ fontSize: '0.875rem', color: 'var(--color-muted)' }}>
+                  Step 3 of 3 — Your report
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                <Link to="/upload" className="btn btn-ghost btn-sm" id="report-back-upload-btn">
+                  ← Upload new
+                </Link>
+                <Link to="/" className="btn btn-ghost btn-sm" id="report-home-btn">
+                  Home
+                </Link>
+              </div>
             </div>
-            <span style={{ fontSize: '0.875rem', color: 'var(--color-muted)' }}>
-              Step 3 of 3 — Your report
-            </span>
-          </div>
           )}
 
           {/* AI Language Translation Selector */}
@@ -713,9 +723,9 @@ export default function Report() {
             <p style={{ fontSize: '0.875rem', maxWidth: '100%', color: 'var(--color-ink-soft)' }}>
               <strong>Not legal advice.</strong> Sift helps you understand contracts faster, but it doesn't replace a qualified lawyer for high-stakes agreements.
             </p>
-            <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
               <Link to="/upload" className="btn btn-primary btn-sm" id="report-analyse-another-btn">
-                Analyse another contract
+                + Analyse another contract
               </Link>
               <button
                 type="button"
@@ -723,8 +733,15 @@ export default function Report() {
                 id="report-print-btn"
                 onClick={handlePrintPDF}
               >
-                Save PDF (Info Only)
+                Save PDF
               </button>
+              <Link
+                to="/"
+                className="btn btn-ghost btn-sm"
+                id="report-home-btn-bottom"
+              >
+                ← Back to home
+              </Link>
             </div>
           </div>
 

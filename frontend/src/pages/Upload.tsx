@@ -1,5 +1,5 @@
 import { useState, useRef, DragEvent, ChangeEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import Nav from '@/components/Nav'
 import { uploadContract } from '@/lib/api'
 
@@ -62,14 +62,19 @@ export default function Upload() {
       <main style={{ flex: 1, padding: 'var(--space-12) var(--space-6)' }}>
         <div className="content-center fade-up">
 
-          {/* Step indicator */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-8)' }}>
-            <div className="step-bar">
-              <div className="step-dot active" />
-              <div className="step-dot" />
-              <div className="step-dot" />
+          {/* Top nav row: step indicator + back link */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)', marginBottom: 'var(--space-8)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+              <div className="step-bar">
+                <div className="step-dot active" />
+                <div className="step-dot" />
+                <div className="step-dot" />
+              </div>
+              <span style={{ fontSize: '0.875rem', color: 'var(--color-muted)' }}>Step 1 of 3 — Upload contract</span>
             </div>
-            <span style={{ fontSize: '0.875rem', color: 'var(--color-muted)' }}>Step 1 of 3 — Upload contract</span>
+            <Link to="/" className="btn btn-ghost btn-sm" id="upload-back-home-btn">
+              ← Home
+            </Link>
           </div>
 
           <h2 style={{ marginBottom: 'var(--space-3)' }}>Upload your contract</h2>

@@ -374,12 +374,40 @@ export default function Landing() {
       <footer style={{
         borderTop: '1px solid var(--color-border)',
         padding: 'var(--space-8) var(--space-6)',
-        textAlign: 'center',
         fontSize: '0.875rem',
         color: 'var(--color-muted)',
       }}>
-        <span style={{ fontFamily: 'var(--font-display)', color: SAGE, marginRight: 4 }}>Sift</span>
-        — contract clarity for freelancers. Not legal advice.
+        <div className="content-wide" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+          {/* Quick-links nav */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 'var(--space-4)',
+          }}>
+            <span style={{ fontFamily: 'var(--font-display)', color: SAGE, fontSize: '1.1rem' }}>Sift<span style={{ color: 'var(--color-sand)' }}>.</span></span>
+
+            <nav aria-label="Footer navigation" style={{ display: 'flex', gap: 'var(--space-5)', flexWrap: 'wrap', alignItems: 'center' }}>
+              <a href="#how-it-works" style={{ color: 'var(--color-ink-soft)' }}>How it works</a>
+              <Link to="/report/sample" style={{ color: 'var(--color-ink-soft)' }}>Sample report</Link>
+              <Link to="/upload" style={{ color: 'var(--color-ink-soft)' }}>Analyse a contract</Link>
+            </nav>
+
+            <Link
+              to="/upload"
+              className="btn btn-primary btn-sm"
+              id="footer-cta-btn"
+            >
+              Get started free
+            </Link>
+          </div>
+
+          {/* Bottom line */}
+          <p style={{ textAlign: 'center', margin: 0, fontSize: '0.8125rem', color: 'var(--color-muted)' }}>
+            Sift — contract clarity for freelancers. Not legal advice.
+          </p>
+        </div>
       </footer>
     </div>
   )
