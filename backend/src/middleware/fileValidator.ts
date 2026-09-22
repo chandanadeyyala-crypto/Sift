@@ -105,19 +105,6 @@ export function fileValidator(req: Request, res: Response, next: NextFunction): 
       return res.status(400).json({ error: 'No file uploaded.' })
     }
 
-    // Verify file size server-side
-    if (req.file.size > MAX_FILE_SIZE_BYTES || req.file.buffer.length > MAX_FILE_SIZE_BYTES) {
-      return res.status(413).json({ error: 'File too large. Maximum size is 20MB.' })
-    }
-
-    // Verify MIME type
-    if (!ALLOWED_MIME_TYPES.has(req.file.mimetype)) {
-      return res.status(415).json({
-        error: `Unsupported file type: ${req.file.mimetype}. Use PDF, JPG, PNG, WebP, or TXT.`,
-      })
-    }
-
-    // Verify magic bytes / file signature to prevent MIME spoofing
     const isValidSignature = validateFileMagicBytes(req.file.buffer, req.file.mimetype)
     if (!isValidSignature) {
       return res.status(415).json({
