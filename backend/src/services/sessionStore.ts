@@ -37,6 +37,8 @@ export async function saveNewSession(session: {
   sessionId: string
   extractedText: string
   contractType: string
+  userId?: string
+  isAnonymous?: boolean
 }): Promise<void> {
   const now = FieldValue.serverTimestamp()
   // Store in memory cache for immediate access

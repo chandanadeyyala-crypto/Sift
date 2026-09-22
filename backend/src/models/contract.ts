@@ -36,6 +36,8 @@ export interface ContractSession {
   sessionId: string
   extractedText: string
   contractType: string
+  userId?: string
+  isAnonymous?: boolean
   userAnswers?: Record<string, string>
   analysis?: ContractAnalysis
   translations?: Record<string, ContractAnalysis>

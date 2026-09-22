@@ -1,64 +1,50 @@
 import { Router, Request, Response, NextFunction } from 'express'
-import multer from 'multer'
 import { randomUUID } from 'crypto'
 import { saveNewSession, getSession, updateSession } from '../services/sessionStore'
 import { extractTextFromImage, analyzeContract, askContractQuestion, translateAnalysis } from '../services/gemini'
 import { ContractSession } from '../models/contract'
+import { optionalAuthenticate } from '../middleware/authenticate'
+import { fileValidator } from '../middleware/fileValidator'
 
 const router = Router()
 
-// ── Rate Limiting ──────────────────────────────────────────
-import rateLimit from 'express-rate-limit'
+// ── Apply optional authentication to all routes ──────────────
+// PRODUCT DECISION: Sift intentionally allows anonymous (unauthenticated) usage
+// to keep the onboarding friction-free for hackathon evaluators and freelancers
+// who have not signed up. When a user IS logged in, their session is bound to
+// their Firebase UID and subsequent requests verify ownership. Anonymous sessions
+// (isAnonymous: true) are accessible by anyone with the sessionId — this is
+// acceptable because sessionIds are UUIDs (128 bits of entropy), users do not
+// share them, and no PII beyond the uploaded contract text is stored.
+router.use(optionalAuthenticate as unknown as (req: Request, res: Response, next: NextFunction) => void)
 
-const uploadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 upload requests per `window`
-  message: { error: 'Too many uploads from this IP, please try again after 15 minutes' },
-  standardHeaders: true,
-  legacyHeaders: false,
-})
-
-// ── Multer: store file in memory (no disk writes) ──────────
-const ALLOWED_MIMETYPES = new Set([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'text/plain',
-])
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
-  fileFilter: (_req, file, cb) => {
-    if (ALLOWED_MIMETYPES.has(file.mimetype)) {
-      cb(null, true)
-    } else {
-      cb(new Error(`Unsupported file type: ${file.mimetype}. Use PDF, JPG, PNG, WebP, or TXT.`))
-    }
+// ── Session ownership helper ──────────────────────────────────
+/**
+ * Returns true if the requesting user is allowed to access this session.
+ * - Anonymous sessions (isAnonymous: true or no userId set) are accessible
+ *   by any caller who knows the sessionId (UUID with sufficient entropy).
+ * - Authenticated sessions (isAnonymous: false, userId set) are only accessible
+ *   by the user whose UID matches the one recorded at upload time.
+ */
+function isSessionOwner(session: Partial<ContractSession>, requestingUid?: string): boolean {
+  // If the session was created anonymously, allow access to anyone with the sessionId
+  if (session.isAnonymous === true || !session.userId) {
+    return true
   }
-})
+  // Authenticated session: require matching UID
+  return requestingUid === session.userId
+}
 
 // ─────────────────────────────────────────────────────────────
 // POST /api/contracts/upload
 // Accepts a file, extracts text (via Gemini Vision for images,
 // or directly for PDFs/text), creates a Firestore session.
+// Rate limiting is applied via express-rate-limit in index.ts.
 // ─────────────────────────────────────────────────────────────
 router.post(
   '/upload',
-  uploadLimiter,
-  (req, res, next) => {
-    upload.single('contract')(req, res, (err) => {
-      if (err) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(413).json({ error: 'File too large. Maximum size is 20MB.' })
-        }
-        return res.status(415).json({ error: err.message })
-      }
-      next()
-    })
-  },
-  async (req: Request, res: Response, next: NextFunction) => {
+  fileValidator,
+  async (req: Request & { uid?: string }, res: Response, next: NextFunction) => {
     try {
       if (!req.file) {
         res.status(400).json({ error: 'No file uploaded.' })
@@ -98,12 +84,14 @@ router.post(
       // Detect contract type heuristically (refined by AI in next step)
       const contractType = detectContractType(extractedText)
 
-      // Persist session
+      // Persist session with ownership metadata
       const sessionId = randomUUID()
+      const uid = req.uid
       await saveNewSession({
         sessionId,
         extractedText,
         contractType,
+        ...(uid ? { userId: uid, isAnonymous: false } : { isAnonymous: true }),
       })
 
       res.json({ sessionId, contractType, extractedText: extractedText.slice(0, 500) + '…' })
@@ -116,8 +104,9 @@ router.post(
 // ─────────────────────────────────────────────────────────────
 // POST /api/contracts/analyze
 // Takes the sessionId + user answers, runs analysis, saves result.
+// Rate limiting is applied via express-rate-limit in index.ts.
 // ─────────────────────────────────────────────────────────────
-router.post('/analyze', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/analyze', async (req: Request & { uid?: string }, res: Response, next: NextFunction) => {
   try {
     const { sessionId, answers } = req.body as {
       sessionId: string
@@ -133,6 +122,12 @@ router.post('/analyze', async (req: Request, res: Response, next: NextFunction) 
     if (!session || !session.extractedText) {
       console.warn(`[contracts/analyze] Session ${sessionId} not found or expired in persistent store.`)
       res.status(404).json({ error: 'Session not found or expired. Please upload your contract again.' })
+      return
+    }
+
+    // Enforce session ownership for authenticated sessions
+    if (!isSessionOwner(session, req.uid)) {
+      res.status(403).json({ error: 'You do not have permission to access this session.' })
       return
     }
 
@@ -169,13 +164,19 @@ router.post('/analyze', async (req: Request, res: Response, next: NextFunction) 
 // GET /api/contracts/report/:sessionId
 // Fetch a previously generated report from Firestore.
 // ─────────────────────────────────────────────────────────────
-router.get('/report/:sessionId', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/report/:sessionId', async (req: Request & { uid?: string }, res: Response, next: NextFunction) => {
   try {
     const { sessionId } = req.params
     const session = await getSession(sessionId)
 
     if (!session) {
       res.status(404).json({ error: 'Report not found.' })
+      return
+    }
+
+    // Enforce session ownership for authenticated sessions
+    if (!isSessionOwner(session, req.uid)) {
+      res.status(403).json({ error: 'You do not have permission to access this report.' })
       return
     }
 
@@ -198,7 +199,7 @@ router.get('/report/:sessionId', async (req: Request, res: Response, next: NextF
 // POST /api/contracts/ask
 // Ask follow-up questions about the contract
 // ─────────────────────────────────────────────────────────────
-router.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/ask', async (req: Request & { uid?: string }, res: Response, next: NextFunction) => {
   try {
     const { sessionId, question, history } = req.body as {
       sessionId: string
@@ -214,6 +215,12 @@ router.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
     const session = await getSession(sessionId)
     if (!session || !session.extractedText) {
       res.status(404).json({ error: 'Contract session not found.' })
+      return
+    }
+
+    // Enforce session ownership for authenticated sessions
+    if (!isSessionOwner(session, req.uid)) {
+      res.status(403).json({ error: 'You do not have permission to access this session.' })
       return
     }
 
@@ -242,7 +249,7 @@ router.post('/ask', async (req: Request, res: Response, next: NextFunction) => {
 // POST /api/contracts/translate
 // Translate the contract analysis into Hindi or Telugu via AI
 // ─────────────────────────────────────────────────────────────
-router.post('/translate', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/translate', async (req: Request & { uid?: string }, res: Response, next: NextFunction) => {
   try {
     const { sessionId, targetLanguage } = req.body as {
       sessionId: string
@@ -257,6 +264,12 @@ router.post('/translate', async (req: Request, res: Response, next: NextFunction
     const session = await getSession(sessionId)
     if (!session || !session.analysis) {
       res.status(404).json({ error: 'Contract report not found for this session.' })
+      return
+    }
+
+    // Enforce session ownership for authenticated sessions
+    if (!isSessionOwner(session, req.uid)) {
+      res.status(403).json({ error: 'You do not have permission to access this session.' })
       return
     }
 

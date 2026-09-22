@@ -25,3 +25,27 @@ export async function authenticate(
     res.status(401).json({ error: 'Invalid or expired token.' })
   }
 }
+
+/**
+ * Optional auth middleware:
+ * If a valid Firebase ID token is provided in the Authorization header,
+ * extracts and attaches `req.uid`. If no token or an invalid token is provided,
+ * the request continues without rejection so anonymous sessions work seamlessly.
+ */
+export async function optionalAuthenticate(
+  req: Request & { uid?: string },
+  _res: Response,
+  next: NextFunction
+): Promise<void> {
+  const authHeader = req.headers.authorization
+  if (authHeader?.startsWith('Bearer ')) {
+    const idToken = authHeader.slice(7).trim()
+    try {
+      const decoded = await admin.auth().verifyIdToken(idToken)
+      req.uid = decoded.uid
+    } catch {
+      // Token invalid or expired; proceed as unauthenticated/anonymous
+    }
+  }
+  next()
+}

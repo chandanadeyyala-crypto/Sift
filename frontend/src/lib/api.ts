@@ -3,6 +3,9 @@
 // Base URL resolves to the Vite dev proxy (/api → localhost:4000)
 // ─────────────────────────────────────────────────────────────
 
+import { auth } from './firebase'
+import { getIdToken } from 'firebase/auth'
+
 const BASE = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}/api`
   : '/api'
@@ -11,11 +14,25 @@ async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
+  // Attach Firebase ID token if user is authenticated, so the backend can bind
+  // session ownership to the requesting user's UID. Anonymous usage still works
+  // seamlessly — the token is simply omitted when no user is signed in.
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> ?? {}),
+  }
+  const currentUser = auth.currentUser
+  if (currentUser) {
+    try {
+      const token = await getIdToken(currentUser, /* forceRefresh */ false)
+      headers['Authorization'] = `Bearer ${token}`
+    } catch {
+      // If token retrieval fails, proceed as anonymous (non-blocking)
+    }
+  }
+
   const res = await fetch(`${BASE}${path}`, {
-    headers: {
-      ...(options.headers ?? {}),
-    },
     ...options,
+    headers,
   })
 
   if (!res.ok) {
