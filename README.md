@@ -5,7 +5,7 @@
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react)](https://react.dev/)
 [![Gemini](https://img.shields.io/badge/AI-Google%20Gemini-orange?logo=google)](https://ai.google.dev/)
 [![Groq](https://img.shields.io/badge/Fallback-Groq%20Cloud-f55036)](https://groq.com/)
-[![Tests Passing](https://img.shields.io/badge/Tests-48%20Passing-brightgreen)](backend/src/__tests__)
+[![Tests Passing](https://img.shields.io/badge/Tests-79%20Passing-brightgreen)](#-running-the-test-suites)
 
 > **Transform complex legal agreements into plain-English clarity.**  
 > Upload any freelance contract, provide your project context, and receive an instant breakdown: what it says, hidden risks, red-flag clauses, what's missing, and exact questions to ask a lawyer or client.

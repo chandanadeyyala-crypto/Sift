@@ -97,13 +97,13 @@ export default function Questions() {
     <div className="page-shell">
       <Nav step={2} />
 
-      <main style={{ flex: 1, padding: 'var(--space-12) var(--space-6)' }}>
+      <main id="main-content" style={{ flex: 1, padding: 'var(--space-12) var(--space-6)' }}>
         <div className="content-center">
 
           {/* Top nav row: step indicator + back link */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)', marginBottom: 'var(--space-8)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-              <div className="step-bar">
+              <div className="step-bar" aria-label="Progress: Step 2 of 3">
                 <div className="step-dot done" />
                 <div className="step-dot active" />
                 <div className="step-dot" />
@@ -118,13 +118,20 @@ export default function Questions() {
           </div>
 
           {/* Progress bar */}
-          <div style={{
-            height: 4,
-            background: 'var(--color-border)',
-            borderRadius: 'var(--radius-pill)',
-            marginBottom: 'var(--space-10)',
-            overflow: 'hidden',
-          }}>
+          <div
+            role="progressbar"
+            aria-valuenow={Math.round(progress)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Question progress: ${current + 1} of ${QUESTIONS.length}`}
+            style={{
+              height: 4,
+              background: 'var(--color-border)',
+              borderRadius: 'var(--radius-pill)',
+              marginBottom: 'var(--space-10)',
+              overflow: 'hidden',
+            }}
+          >
             <div style={{
               height: '100%',
               width: `${progress}%`,
@@ -140,7 +147,7 @@ export default function Questions() {
               Question {current + 1} of {QUESTIONS.length}
             </p>
 
-            <h3 style={{ marginBottom: 'var(--space-6)', maxWidth: '100%' }}>{q.label}</h3>
+            <h1 style={{ marginBottom: 'var(--space-6)', maxWidth: '100%', fontSize: '1.375rem' }}>{q.label}</h1>
 
             {q.type === 'radio' && q.options && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
@@ -189,14 +196,18 @@ export default function Questions() {
           </div>
 
           {error && (
-            <div style={{
-              marginBottom: 'var(--space-4)',
-              padding: 'var(--space-3) var(--space-4)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--color-risk-high)',
-              color: 'var(--color-risk-high)',
-              fontSize: '0.9rem',
-            }}>
+            <div
+              role="alert"
+              aria-live="assertive"
+              style={{
+                marginBottom: 'var(--space-4)',
+                padding: 'var(--space-3) var(--space-4)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-risk-high)',
+                color: 'var(--color-risk-high)',
+                fontSize: '0.9rem',
+              }}
+            >
               ⚠ {error}
             </div>
           )}

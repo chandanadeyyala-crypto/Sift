@@ -5,7 +5,7 @@ export default function NotFound() {
   return (
     <div className="page-shell">
       <Nav />
-      <main style={{
+      <main id="main-content" style={{
         flex: 1,
         display: 'flex',
         alignItems: 'center',
@@ -16,7 +16,7 @@ export default function NotFound() {
         textAlign: 'center',
       }}>
         <span style={{ fontSize: '3.5rem', lineHeight: 1 }}>📄</span>
-        <h2>Page not found</h2>
+        <h1>Page not found</h1>
         <p style={{ maxWidth: '36ch', textAlign: 'center' }}>
           We couldn't find that page. Maybe the contract expired.
         </p>

@@ -78,8 +78,9 @@ export default function Landing() {
     <div className="page-shell">
       <Nav />
 
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section style={{ padding: 'var(--space-20) var(--space-6) var(--space-16)', textAlign: 'center' }}>
+      <main id="main-content">
+        {/* ── Hero ──────────────────────────────────────────────────────────── */}
+        <section style={{ padding: 'var(--space-20) var(--space-6) var(--space-16)', textAlign: 'center' }}>
         <div className="content-center fade-up">
 
           <p style={{
@@ -369,6 +370,7 @@ export default function Landing() {
           </Link>
         </div>
       </section>
+    </main>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <footer style={{

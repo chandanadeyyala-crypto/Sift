@@ -20,6 +20,9 @@ export default function Nav({ step }: NavProps) {
 
   return (
     <>
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <header className="nav" role="banner">
         <div className="nav-inner">
           <Link to="/" className="nav-logo" aria-label="Sift home">

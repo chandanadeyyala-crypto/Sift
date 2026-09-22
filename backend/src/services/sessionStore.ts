@@ -69,7 +69,13 @@ export async function saveNewSession(session: {
 }
 
 export async function getSession(sessionId: string): Promise<Partial<ContractSession> | null> {
-  // 1. Try reading from persistent Firestore first
+  // 1. Fast in-memory cache hit (eliminates redundant remote Firestore calls)
+  const cached = memoryStore.get(sessionId)
+  if (cached) {
+    return cached
+  }
+
+  // 2. Cache miss (e.g. process restart / recycling): load from persistent Firestore
   if (!firestoreDisabled) {
     try {
       const snap = await db.collection('sessions').doc(sessionId).get()
@@ -90,7 +96,7 @@ export async function getSession(sessionId: string): Promise<Partial<ContractSes
     }
   }
 
-  // 2. Fall back to memory store
+  // 3. Fallback to memory store if Firestore unavailable or threw
   return memoryStore.get(sessionId) || null
 }
 

@@ -59,13 +59,13 @@ export default function Upload() {
     <div className="page-shell">
       <Nav step={1} />
 
-      <main style={{ flex: 1, padding: 'var(--space-12) var(--space-6)' }}>
+      <main id="main-content" style={{ flex: 1, padding: 'var(--space-12) var(--space-6)' }}>
         <div className="content-center fade-up">
 
           {/* Top nav row: step indicator + back link */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)', marginBottom: 'var(--space-8)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-              <div className="step-bar">
+              <div className="step-bar" aria-label="Progress: Step 1 of 3">
                 <div className="step-dot active" />
                 <div className="step-dot" />
                 <div className="step-dot" />
@@ -77,7 +77,7 @@ export default function Upload() {
             </Link>
           </div>
 
-          <h2 style={{ marginBottom: 'var(--space-3)' }}>Upload your contract</h2>
+          <h1 style={{ marginBottom: 'var(--space-3)' }}>Upload your contract</h1>
           <p style={{ marginBottom: 'var(--space-8)' }}>
             PDF, image (JPG/PNG/WebP), or plain text. Max 20 MB.
             We never share your documents.
@@ -93,7 +93,12 @@ export default function Upload() {
             role="button"
             tabIndex={0}
             aria-label="Click or drag to upload your contract"
-            onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                inputRef.current?.click()
+              }
+            }}
           >
             <input
               ref={inputRef}

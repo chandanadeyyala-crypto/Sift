@@ -22,7 +22,7 @@
   --color-sand-faint:  #FAF8EF;
   --color-ink:         #1C1C1C;
   --color-ink-soft:    #4A4A4A;
-  --color-muted:       #888888;
+  --color-muted:       #595959; /* Enhanced for WCAG AAA 7:1 contrast on white */
   --color-border:      #E5E1D0;
   --color-surface:     #FAFAF8;
 
@@ -71,6 +71,52 @@
   /* Layout */
   --max-content: 760px;
   --max-wide:    1100px;
+}
+
+/* ── Accessibility: Focus & Keyboard Navigation ───────────── */
+:focus-visible {
+  outline: 2px solid var(--color-sage);
+  outline-offset: 3px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-sage);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: var(--space-4);
+  background: var(--color-sage);
+  color: var(--color-white);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  z-index: 9999;
+  transition: top var(--transition-fast);
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: var(--space-4);
+  outline: 3px solid var(--color-sand);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 html {

@@ -331,7 +331,7 @@ export default function Report() {
         </div>
       )}
 
-      <main style={{ flex: 1, padding: 'var(--space-10) var(--space-6) var(--space-20)' }}>
+      <main id="main-content" style={{ flex: 1, padding: 'var(--space-10) var(--space-6) var(--space-20)' }}>
         <div className="content-center fade-up">
 
           {/* Top nav row — hidden for sample */}
@@ -341,7 +341,7 @@ export default function Report() {
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)', marginBottom: 'var(--space-8)' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-                <div className="step-bar">
+                <div className="step-bar" aria-label="Progress: Step 3 of 3">
                   <div className="step-dot done" />
                   <div className="step-dot done" />
                   <div className="step-dot active" />
@@ -441,9 +441,9 @@ export default function Report() {
             {/* Document Header */}
             <div style={{ marginBottom: 'var(--space-8)' }}>
               <div className="report-header-row">
-                <h2 style={{ marginBottom: 'var(--space-2)', color: 'var(--color-sage)' }}>
+                <h1 style={{ marginBottom: 'var(--space-2)', color: 'var(--color-sage)', fontSize: '1.75rem' }}>
                   Contract Analysis Report
-                </h2>
+                </h1>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
                   <Link
                     to="/upload"

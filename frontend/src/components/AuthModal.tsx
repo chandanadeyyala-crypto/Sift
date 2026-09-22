@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 
 interface AuthModalProps {
@@ -16,6 +16,15 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
   const [localError, setLocalError] = useState<string | null>(null)
 
   const { login, signup, loginWithGoogle } = useAuth()
+
+  useEffect(() => {
+    if (!isOpen) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -73,6 +82,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
     >
       <div
         className="card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
         style={{
           width: '100%',
           maxWidth: 420,
@@ -95,12 +107,12 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             color: 'var(--color-muted)',
             lineHeight: 1,
           }}
-          aria-label="Close"
+          aria-label="Close dialog"
         >
           &times;
         </button>
 
-        <h3 style={{ marginBottom: 'var(--space-2)' }}>
+        <h3 id="auth-modal-title" style={{ marginBottom: 'var(--space-2)' }}>
           {mode === 'login' ? 'Sign in to Sift' : 'Create your account'}
         </h3>
         <p style={{ fontSize: '0.875rem', marginBottom: 'var(--space-6)', color: 'var(--color-muted)' }}>
@@ -111,6 +123,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
 
         {localError && (
           <div
+            role="alert"
+            aria-live="assertive"
             style={{
               padding: 'var(--space-3) var(--space-4)',
               backgroundColor: '#FDF2ED',
@@ -129,10 +143,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           {mode === 'signup' && (
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 'var(--space-1)' }}>
+              <label htmlFor="auth-name-input" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 'var(--space-1)' }}>
                 Your Name
               </label>
               <input
+                id="auth-name-input"
                 type="text"
                 className="input"
                 placeholder="Alex Rivera"
@@ -144,10 +159,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           )}
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 'var(--space-1)' }}>
+            <label htmlFor="auth-email-input" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 'var(--space-1)' }}>
               Email address
             </label>
             <input
+              id="auth-email-input"
               type="email"
               className="input"
               placeholder="alex@freelancer.com"
@@ -158,10 +174,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 'var(--space-1)' }}>
+            <label htmlFor="auth-password-input" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 'var(--space-1)' }}>
               Password
             </label>
             <input
+              id="auth-password-input"
               type="password"
               className="input"
               placeholder="••••••••"
