@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import rateLimit from 'express-rate-limit'
 import contractRoutes from './routes/contracts'
 import { errorHandler } from './middleware/errorHandler'
 import { requestLogger } from './middleware/requestLogger'
@@ -68,6 +69,22 @@ app.options('*', cors(corsOptions))
 
 app.use(express.json())
 app.use(requestLogger)
+
+// ── Rate Limiting — AI-triggered endpoints ─────────────────
+// Applied here (not in the router) to ensure ordering relative to middleware.
+// Limit: 10 requests per IP per 15-minute window on routes that invoke paid
+// Gemini API calls, preventing runaway API costs from abuse or automated scanners.
+const aiEndpointLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests from this IP. Please try again after 15 minutes.' },
+  skip: () => process.env.NODE_ENV === 'test', // Don't rate-limit in test environment
+})
+
+app.use('/api/contracts/upload', aiEndpointLimiter)
+app.use('/api/contracts/analyze', aiEndpointLimiter)
 
 // ── Routes ─────────────────────────────────────────────────
 app.use('/api/contracts', contractRoutes)
