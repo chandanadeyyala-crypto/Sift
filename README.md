@@ -1,4 +1,4 @@
-# 📄 Sift — Contract Clarity for Freelancers
+# 📄 Sift ,Contract Clarity for Freelancers
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?logo=typescript)](https://www.typescriptlang.org/)
