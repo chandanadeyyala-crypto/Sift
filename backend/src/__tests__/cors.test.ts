@@ -19,6 +19,15 @@ describe('CORS Configuration Tests', () => {
     expect(res.headers['access-control-allow-origin']).toBe('http://127.0.0.1:5173')
   })
 
+  it('allows requests from exact production origin https://sift-gamma-one.vercel.app', async () => {
+    const res = await request(app)
+      .get('/api/health')
+      .set('Origin', 'https://sift-gamma-one.vercel.app')
+    expect(res.status).toBe(200)
+    expect(res.headers['access-control-allow-origin']).toBe('https://sift-gamma-one.vercel.app')
+    expect(res.headers['access-control-allow-credentials']).toBe('true')
+  })
+
   it('rejects unauthorized arbitrary vercel.app domains without wildcard matching', async () => {
     const res = await request(app)
       .get('/api/health')

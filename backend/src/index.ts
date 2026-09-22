@@ -25,6 +25,7 @@ const HOST = '0.0.0.0'
 const allowedOrigins = new Set<string>([
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'https://sift-gamma-one.vercel.app',
 ])
 
 if (process.env.FRONTEND_URL) {
