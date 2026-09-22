@@ -8,9 +8,15 @@ export function errorHandler(
 ): void {
   console.error('[error]', err)
   const status = (err as Error & { status?: number }).status ?? 500
-  const message = err.message || 'Internal server error'
+
+  // In production, sanitize 500-level errors to prevent leaking internal stack
+  // details or file paths. Client-facing 4xx errors still show their message.
+  const isProd = process.env.NODE_ENV === 'production'
+  const safeMessage = (isProd && status >= 500)
+    ? 'Internal server error'
+    : (err.message || 'Internal server error')
 
   res.status(status).json({
-    error: message,
+    error: safeMessage,
   })
 }
