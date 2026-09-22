@@ -19,42 +19,42 @@ const PORT = Number(process.env.PORT) || 4000
 const HOST = '0.0.0.0'
 
 // ── CORS Configuration ─────────────────────────────────────
-const configuredOrigins = (process.env.FRONTEND_URL || '')
-  .split(',')
-  .map((url) => url.trim().replace(/\/$/, ''))
-  .filter(Boolean)
+// Locked strictly to exact production Vercel frontend domain and local dev origins.
+// Wildcards (*) and loose regex patterns matching arbitrary *.vercel.app subdomains are prohibited.
+const allowedOrigins = new Set<string>([
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+])
+
+if (process.env.FRONTEND_URL) {
+  process.env.FRONTEND_URL
+    .split(',')
+    .map((url) => url.trim().replace(/\/$/, ''))
+    .filter((url) => url && url !== '*')
+    .forEach((url) => allowedOrigins.add(url))
+}
+
+if (process.env.VERCEL_URL) {
+  const vercelDomain = process.env.VERCEL_URL.trim().replace(/\/$/, '')
+  const formattedUrl = vercelDomain.startsWith('http') ? vercelDomain : `https://${vercelDomain}`
+  allowedOrigins.add(formattedUrl)
+}
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    // Allow server-to-server, curl, mobile, and health check requests without origin
+    // Allow non-browser requests without origin header (server-to-server, curl, health checks)
     if (!origin) {
       return callback(null, true)
     }
 
-    const normalizedOrigin = origin.replace(/\/$/, '')
+    const normalizedOrigin = origin.trim().replace(/\/$/, '')
 
-    // Check configured FRONTEND_URL(s)
-    if (configuredOrigins.includes(normalizedOrigin) || configuredOrigins.includes('*')) {
+    if (allowedOrigins.has(normalizedOrigin)) {
       return callback(null, true)
     }
 
-    // Automatically allow all Vercel deployments (production and preview branches)
-    if (/^https:\/\/([a-zA-Z0-9_-]+\.)*vercel\.app$/.test(normalizedOrigin)) {
-      return callback(null, true)
-    }
-
-    // Automatically allow local development
-    if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalizedOrigin)) {
-      return callback(null, true)
-    }
-
-    // Allow all in development/test if not matched above
-    if (process.env.NODE_ENV !== 'production') {
-      return callback(null, true)
-    }
-
-    // Reject gracefully without throwing an unhandled exception
-    callback(null, false)
+    // Deny origin gracefully without setting Access-Control-Allow-Origin
+    return callback(null, false)
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
